@@ -1,0 +1,1044 @@
+Absolutely. **Experiment 2 is OLAP Operations** — Slice, Dice, Drill-down, Roll-up and Pivot.  
+I'll first give you the **detailed theory/concepts**, then use **one common table throughout** and perform every operation on that same data so it's easy to write in your practical.
+
+---
+
+# Experiment No. 2 — OLAP Operations
+
+## Aim
+
+**To study and perform OLAP operations such as Slice, Dice, Drill-down, Roll-up and Pivot on a multidimensional data set.**
+
+---
+
+# PART A — THEORY
+
+## 1. What is OLAP?
+
+**OLAP** stands for **Online Analytical Processing**.
+
+OLAP is a technology used to analyze large amounts of data from different perspectives or dimensions.
+
+It is mainly used in:
+
+- Business Intelligence
+- Data Warehousing
+- Reporting
+- Decision making
+- Sales analysis
+- Financial analysis
+- Customer analysis
+- Trend analysis
+
+The main purpose of OLAP is not to record transactions, but to **analyze existing data**.
+
+### Simple example
+
+Suppose a company has millions of sales transactions.
+
+Management may want to ask:
+
+> "How much did we sell in Mumbai?"
+
+Then:
+
+> "How much did we sell in Mumbai for Electronics?"
+
+Then:
+
+> "How much did we sell in Mumbai for Electronics during Q1?"
+
+OLAP operations allow us to look at the same data from these different perspectives.
+
+---
+
+# 2. OLTP vs OLAP
+
+Before understanding OLAP, it is important to understand the difference between **OLTP** and **OLAP**.
+
+### OLTP — Online Transaction Processing
+
+OLTP systems are used for **day-to-day transactions**.
+
+Examples:
+
+- Placing an order
+- Making a payment
+- Booking a ticket
+- Updating customer information
+- Recording a sale
+
+Example:
+
+```text
+Customer buys Laptop
+        ↓
+Transaction recorded
+        ↓
+Payment processed
+        ↓
+Inventory updated
+```
+
+OLTP focuses on **individual transactions**.
+
+---
+
+### OLAP — Online Analytical Processing
+
+OLAP takes historical data and analyzes it.
+
+Example:
+
+```text
+Millions of Sales Transactions
+              ↓
+          Data Warehouse
+              ↓
+             OLAP
+              ↓
+       Business Analysis
+              ↓
+ "Which city has the highest sales?"
+```
+
+### Difference
+
+| OLTP | OLAP |
+|---|---|
+| Transaction processing | Analytical processing |
+| Current data | Historical data |
+| Many small transactions | Large analytical queries |
+| Insert/Update/Delete | Mostly Read |
+| Highly normalized | Usually dimensional |
+| Used by operational users | Used by analysts/managers |
+| Example: Banking transaction | Example: Yearly sales analysis |
+
+---
+
+# 3. OLAP Cube
+
+The central concept behind OLAP is the **multidimensional data cube**.
+
+A data cube represents data using multiple **dimensions** and **measures**.
+
+For example, consider sales.
+
+### Dimensions
+
+We could analyze sales using:
+
+```text
+Time
+Product
+Location
+```
+
+### Measure
+
+The measurable value is:
+
+```text
+Sales Amount
+```
+
+So conceptually:
+
+```text
+                 TIME
+                  ↑
+                  |
+                  |
+                  |
+                  +----------------→ PRODUCT
+                 /
+                /
+               /
+          LOCATION
+```
+
+Each combination of dimensions contains a measure.
+
+For example:
+
+```text
+Mumbai + Electronics + 2025
+              ↓
+          ₹75,000
+```
+
+Another:
+
+```text
+Pune + Furniture + 2025
+              ↓
+          ₹45,000
+```
+
+The cube allows us to move through different levels of detail.
+
+---
+
+# 4. Dimensions
+
+A **dimension** is a perspective or category through which data can be analyzed.
+
+Common dimensions include:
+
+### Time Dimension
+
+```text
+Year
+ ↓
+Quarter
+ ↓
+Month
+ ↓
+Day
+```
+
+### Location Dimension
+
+```text
+Country
+ ↓
+State
+ ↓
+City
+ ↓
+Store
+```
+
+### Product Dimension
+
+```text
+Category
+ ↓
+Subcategory
+ ↓
+Product
+```
+
+For example:
+
+```text
+Electronics
+    ↓
+Computers
+    ↓
+Laptop
+```
+
+Dimensions provide the **context** for measures.
+
+---
+
+# 5. Measures
+
+A **measure** is a numerical value that can be analyzed or aggregated.
+
+Examples:
+
+- SalesAmount
+- Quantity
+- Profit
+- Revenue
+- Cost
+- Discount
+
+For example:
+
+```text
+Product       Quantity       Sales
+Laptop           5          ₹2,75,000
+Mouse           20          ₹16,000
+Keyboard        10          ₹15,000
+```
+
+Here:
+
+```text
+Quantity → Measure
+Sales    → Measure
+```
+
+---
+
+# 6. Dimension Hierarchy
+
+A dimension hierarchy represents different levels of detail.
+
+For example, Time:
+
+```text
+Year
+ │
+ ├── Quarter
+ │
+ ├── Month
+ │
+ └── Day
+```
+
+More accurately:
+
+```text
+2025
+ │
+ ├── Q1
+ │    ├── January
+ │    ├── February
+ │    └── March
+ │
+ └── Q2
+      ├── April
+      ├── May
+      └── June
+```
+
+This hierarchy is extremely important for **Drill-down and Roll-up**.
+
+### Drill-down
+
+Move:
+
+```text
+Year → Quarter → Month → Day
+```
+
+More detail.
+
+### Roll-up
+
+Move:
+
+```text
+Day → Month → Quarter → Year
+```
+
+More summarized.
+
+---
+
+# 7. OLAP Operations
+
+The five important OLAP operations in this experiment are:
+
+1. **Slice**
+2. **Dice**
+3. **Drill-down**
+4. **Roll-up**
+5. **Pivot**
+
+They all analyze the same underlying data but from different perspectives.
+
+---
+
+# 8. Slice Operation
+
+## Definition
+
+**Slice** is an OLAP operation that selects a **single value from one dimension**, producing a smaller view of the data.
+
+In simple words:
+
+> Fix one dimension to one particular value and examine the remaining data.
+
+---
+
+### Example
+
+Suppose we have:
+
+```text
+Year
+City
+Product
+Sales
+```
+
+If we select:
+
+```text
+Year = 2025
+```
+
+we have sliced the cube at 2025.
+
+Conceptually:
+
+```text
+3D Cube
+
+       Year
+        |
+        | 2024
+        | 2025  ← SELECT
+        | 2026
+        |
+        +----------------
+```
+
+The result is a smaller dataset containing only 2025.
+
+### Important point
+
+**Slice generally selects one fixed value from one dimension.**
+
+Example:
+
+```text
+Year = 2025
+```
+
+not:
+
+```text
+Year = 2025 AND City = Mumbai
+```
+
+That starts becoming a **Dice** operation because multiple dimensions are being restricted.
+
+---
+
+# 9. Dice Operation
+
+## Definition
+
+**Dice** selects a **sub-cube** by applying conditions to multiple dimensions.
+
+In simple words:
+
+> Dice selects specific values or ranges from two or more dimensions.
+
+---
+
+### Example
+
+Suppose we select:
+
+```text
+Year = 2025
+City = Mumbai OR Pune
+Product Category = Electronics
+```
+
+We have restricted multiple dimensions.
+
+Therefore:
+
+```text
+Year       → 2025
+City       → Mumbai, Pune
+Category   → Electronics
+```
+
+This produces a smaller sub-cube.
+
+### Slice vs Dice
+
+| Slice | Dice |
+|---|---|
+| Usually one dimension is fixed | Multiple dimensions are restricted |
+| Produces a slice of cube | Produces a sub-cube |
+| Example: Year = 2025 | Example: Year = 2025, City = Mumbai/Pune, Category = Electronics |
+
+Easy way to remember:
+
+> **Slice = one cut**  
+> **Dice = multiple cuts**
+
+---
+
+# 10. Drill-down Operation
+
+## Definition
+
+**Drill-down** moves from higher-level summarized data to lower-level detailed data.
+
+It means:
+
+> Going from general information to more detailed information.
+
+---
+
+### Time example
+
+```text
+Year
+ ↓
+Quarter
+ ↓
+Month
+ ↓
+Day
+```
+
+Suppose initially we have:
+
+```text
+2025 → ₹10,00,000
+```
+
+Drill down:
+
+```text
+2025
+  ↓
+Q1 → ₹2,50,000
+Q2 → ₹3,00,000
+Q3 → ₹2,00,000
+Q4 → ₹2,50,000
+```
+
+Drill down again:
+
+```text
+Q1
+ ↓
+January  → ₹80,000
+February → ₹90,000
+March    → ₹80,000
+```
+
+So:
+
+**Drill-down = more detail.**
+
+---
+
+# 11. Roll-up Operation
+
+## Definition
+
+**Roll-up** is the opposite of drill-down.
+
+It moves from detailed data to summarized data.
+
+Example:
+
+```text
+Day
+ ↓
+Month
+ ↓
+Quarter
+ ↓
+Year
+```
+
+Suppose we have:
+
+```text
+January  → ₹80,000
+February → ₹90,000
+March    → ₹80,000
+```
+
+Roll-up:
+
+```text
+Q1 → ₹2,50,000
+```
+
+Roll-up can also be performed across geographical hierarchies.
+
+For example:
+
+```text
+Store
+ ↓
+City
+ ↓
+State
+ ↓
+Country
+```
+
+So:
+
+```text
+Store-level sales
+       ↓
+City-level sales
+       ↓
+State-level sales
+       ↓
+Country-level sales
+```
+
+### Important difference
+
+```text
+DRILL-DOWN
+Less detail → More detail
+
+ROLL-UP
+More detail → Less detail
+```
+
+---
+
+# 12. Pivot Operation
+
+## Definition
+
+**Pivot** changes the orientation or arrangement of dimensions in an OLAP report.
+
+It does **not necessarily change the underlying data**.
+
+It simply changes how the information is displayed.
+
+For example:
+
+### Before Pivot
+
+```text
+             Product
+City          Laptop    Mouse
+--------------------------------
+Mumbai        55000     1600
+Pune          70000     2400
+Nashik        45000     800
+```
+
+After pivot:
+
+```text
+             City
+Product       Mumbai    Pune    Nashik
+---------------------------------------
+Laptop        55000    70000    45000
+Mouse          1600     2400      800
+```
+
+The information is the same.
+
+The rows and columns have been exchanged.
+
+### Simple definition
+
+> **Pivot = rotate/rearrange the dimensions of the report.**
+
+---
+
+# 13. Summary of OLAP Operations
+
+| Operation | What it does | Example |
+|---|---|---|
+| **Slice** | Selects one value of a dimension | Year = 2025 |
+| **Dice** | Selects values from multiple dimensions | 2025 + Mumbai/Pune + Electronics |
+| **Drill-down** | Moves to more detail | Year → Quarter → Month |
+| **Roll-up** | Moves to higher summary | Day → Month → Quarter → Year |
+| **Pivot** | Changes report orientation | Rows ↔ Columns |
+
+---
+
+# PART B — COMMON EXAMPLE DATA
+
+Now let's use **one table for every operation**.
+
+Suppose this is our **Retail Sales table**.
+
+## Sales Table
+
+| Year | Quarter | Month | City | Product | Category | Sales |
+|---:|---|---|---|---|---|---:|
+| 2025 | Q1 | Jan | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q1 | Jan | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q1 | Feb | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q1 | Feb | Pune | Mouse | Electronics | 2400 |
+| 2025 | Q1 | Mar | Mumbai | Chair | Furniture | 4500 |
+| 2025 | Q1 | Mar | Pune | Chair | Furniture | 5000 |
+| 2025 | Q2 | Apr | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q2 | Apr | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q2 | May | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q2 | May | Pune | Mouse | Electronics | 2400 |
+| 2025 | Q2 | Jun | Mumbai | Chair | Furniture | 4500 |
+| 2025 | Q2 | Jun | Pune | Chair | Furniture | 5000 |
+| 2026 | Q1 | Jan | Mumbai | Laptop | Electronics | 65000 |
+| 2026 | Q1 | Jan | Pune | Laptop | Electronics | 70000 |
+| 2026 | Q1 | Feb | Mumbai | Mouse | Electronics | 1800 |
+| 2026 | Q1 | Feb | Pune | Mouse | Electronics | 2500 |
+
+For simplicity, we will analyze the **Sales** column as our measure.
+
+---
+
+# PART C — PERFORMING OLAP OPERATIONS
+
+# 14. Slice Operation
+
+Let's perform:
+
+> **Slice where Year = 2025**
+
+We fix the **Year dimension** to 2025.
+
+### Original
+
+```text
+2025
+2026
+```
+
+We select:
+
+```text
+Year = 2025
+```
+
+### Result
+
+| Year | Quarter | Month | City | Product | Category | Sales |
+|---:|---|---|---|---|---|---:|
+| 2025 | Q1 | Jan | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q1 | Jan | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q1 | Feb | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q1 | Feb | Pune | Mouse | Electronics | 2400 |
+| 2025 | Q1 | Mar | Mumbai | Chair | Furniture | 4500 |
+| 2025 | Q1 | Mar | Pune | Chair | Furniture | 5000 |
+| 2025 | Q2 | Apr | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q2 | Apr | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q2 | May | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q2 | May | Pune | Mouse | Electronics | 2400 |
+| 2025 | Q2 | Jun | Mumbai | Chair | Furniture | 4500 |
+| 2025 | Q2 | Jun | Pune | Chair | Furniture | 5000 |
+
+### What happened?
+
+We removed all 2026 records.
+
+```text
+Original Data
+     ↓
+Year = 2025
+     ↓
+2025 Data Only
+```
+
+Therefore:
+
+> **Slice = fixing one dimension to one value.**
+
+---
+
+# 15. Dice Operation
+
+Now let's perform a **Dice**.
+
+We want:
+
+```text
+Year = 2025
+City = Mumbai or Pune
+Category = Electronics
+```
+
+We're restricting **three dimensions**:
+
+```text
+Year
+City
+Category
+```
+
+### Result
+
+| Year | Quarter | Month | City | Product | Category | Sales |
+|---:|---|---|---|---|---|---:|
+| 2025 | Q1 | Jan | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q1 | Jan | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q1 | Feb | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q1 | Feb | Pune | Mouse | Electronics | 2400 |
+| 2025 | Q2 | Apr | Mumbai | Laptop | Electronics | 55000 |
+| 2025 | Q2 | Apr | Pune | Laptop | Electronics | 60000 |
+| 2025 | Q2 | May | Mumbai | Mouse | Electronics | 1600 |
+| 2025 | Q2 | May | Pune | Mouse | Electronics | 2400 |
+
+Notice that:
+
+- 2026 → removed
+- Furniture → removed
+- Mumbai/Pune → retained
+
+Therefore:
+
+> **Dice creates a smaller sub-cube by applying conditions on multiple dimensions.**
+
+---
+
+# 16. Drill-down Operation
+
+Now let's say management initially wants **sales by year**.
+
+We aggregate our data.
+
+### Level 1 — Year
+
+For 2025:
+
+```text
+55000 + 60000 + 1600 + 2400 + 4500 + 5000
++ 55000 + 60000 + 1600 + 2400 + 4500 + 5000
+```
+
+= **₹260,000**
+
+For 2026:
+
+```text
+65000 + 70000 + 1800 + 2500
+```
+
+= **₹139,300**
+
+So the summarized table is:
+
+| Year | Total Sales |
+|---:|---:|
+| 2025 | ₹260,000 |
+| 2026 | ₹139,300 |
+
+This is our high-level view.
+
+---
+
+## Drill down: Year → Quarter
+
+Now we want more detail.
+
+```text
+Year
+ ↓
+Quarter
+```
+
+### Result
+
+| Year | Quarter | Total Sales |
+|---:|---|---:|
+| 2025 | Q1 | ₹128,500 |
+| 2025 | Q2 | ₹131,500 |
+| 2026 | Q1 | ₹139,300 |
+
+Now we can see which quarter generated the sales.
+
+---
+
+## Drill down again: Quarter → Month
+
+For 2025 Q1:
+
+| Year | Quarter | Month | Sales |
+|---:|---|---|---:|
+| 2025 | Q1 | Jan | ₹115,000 |
+| 2025 | Q1 | Feb | ₹4,000 |
+| 2025 | Q1 | Mar | ₹9,500 |
+
+So our hierarchy is:
+
+```text
+Year
+  ↓
+Quarter
+  ↓
+Month
+  ↓
+Day
+```
+
+Every downward movement gives us **more detailed information**.
+
+### Therefore:
+
+> **Drill-down = moving from summarized data toward detailed data.**
+
+---
+
+# 17. Roll-up Operation
+
+Now do exactly the opposite.
+
+Suppose we start with monthly data:
+
+| Year | Quarter | Month | Sales |
+|---:|---|---|---:|
+| 2025 | Q1 | Jan | ₹115,000 |
+| 2025 | Q1 | Feb | ₹4,000 |
+| 2025 | Q1 | Mar | ₹9,500 |
+| 2025 | Q2 | Apr | ₹115,000 |
+| 2025 | Q2 | May | ₹4,000 |
+| 2025 | Q2 | Jun | ₹9,500 |
+
+We roll up:
+
+```text
+Month
+ ↓
+Quarter
+```
+
+### Result
+
+| Year | Quarter | Sales |
+|---:|---|---:|
+| 2025 | Q1 | ₹128,500 |
+| 2025 | Q2 | ₹131,500 |
+
+Then roll up again:
+
+```text
+Quarter
+ ↓
+Year
+```
+
+### Result
+
+| Year | Total Sales |
+|---:|---:|
+| 2025 | ₹260,000 |
+
+So:
+
+```text
+DAY
+ ↓
+MONTH
+ ↓
+QUARTER
+ ↓
+YEAR
+```
+
+is a **roll-up hierarchy**.
+
+### Therefore:
+
+> **Roll-up = moving from detailed data toward summarized data.**
+
+---
+
+# 18. Pivot Operation
+
+Now let's analyze sales by city and product.
+
+Initially we can represent it as:
+
+| City | Product | Sales |
+|---|---|---:|
+| Mumbai | Laptop | 55000 |
+| Pune | Laptop | 60000 |
+| Mumbai | Mouse | 1600 |
+| Pune | Mouse | 2400 |
+| Mumbai | Chair | 4500 |
+| Pune | Chair | 5000 |
+
+Now we **pivot** the data.
+
+### Before Pivot
+
+```text
+City → Product → Sales
+```
+
+### After Pivot
+
+We make:
+
+```text
+             Laptop    Mouse    Chair
+Mumbai        55000     1600     4500
+Pune          60000     2400     5000
+```
+
+So the resulting report becomes:
+
+| City | Laptop | Mouse | Chair |
+|---|---:|---:|---:|
+| Mumbai | ₹55,000 | ₹1,600 | ₹4,500 |
+| Pune | ₹60,000 | ₹2,400 | ₹5,000 |
+
+Now let's reverse the orientation.
+
+### Pivot again
+
+Products become rows:
+
+| Product | Mumbai | Pune |
+|---|---:|---:|
+| Laptop | ₹55,000 | ₹60,000 |
+| Mouse | ₹1,600 | ₹2,400 |
+| Chair | ₹4,500 | ₹5,000 |
+
+The data itself hasn't changed.
+
+Only its **orientation/presentation** changed.
+
+---
+
+# 19. All Five Operations Together
+
+This is the easiest way to remember the entire experiment:
+
+```text
+                    OLAP
+                     |
+       +-------------+-------------+
+       |             |             |
+     SLICE          DICE        PIVOT
+       |             |             |
+   One value     Multiple       Change
+   of one        dimensions     orientation
+   dimension     restricted
+       |
+       |
+       +-----------------------+
+                               |
+                         DRILL-DOWN
+                               ↑
+                        More detail
+                               |
+                        Year → Quarter
+                               |
+                           Quarter
+                               ↓
+                          Month → Day
+
+                         ROLL-UP
+                             ↑
+                       More summary
+                             |
+                        Day → Month
+                             |
+                     Month → Quarter
+                             |
+                     Quarter → Year
+```
+
+---
+
+# 20. Final Comparison
+
+| Operation | Direction / Action | Example |
+|---|---|---|
+| **Slice** | Fix one dimension | Year = 2025 |
+| **Dice** | Filter multiple dimensions | 2025 + Mumbai/Pune + Electronics |
+| **Drill-down** | More detail | Year → Quarter → Month |
+| **Roll-up** | More summary | Month → Quarter → Year |
+| **Pivot** | Change orientation | City as rows → Product as rows |
+
+### One-line memory trick
+
+**Slice = one filter**  
+**Dice = multiple filters**  
+**Drill-down = zoom in**  
+**Roll-up = zoom out**  
+**Pivot = rotate the view**
+
+---
+
+# Result
+
+The OLAP operations **Slice, Dice, Drill-down, Roll-up and Pivot** were studied and applied to a Retail Sales dataset. These operations allow the same data to be analyzed from different dimensions and levels of detail, making OLAP useful for **business intelligence, reporting and decision-making**.
