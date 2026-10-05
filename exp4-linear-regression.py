@@ -1,6 +1,65 @@
-# ============================================
-# EXPERIMENT 04 - LINEAR REGRESSION
-# ============================================
+# ==============================================================================
+# EXPERIMENT 04: LINEAR REGRESSION
+# ==============================================================================
+#
+# AIM:
+# To implement Simple Linear Regression using the Ordinary Least Squares (OLS)
+# method to model the relationship between an independent variable and a
+# dependent variable, and perform continuous numerical predictions.
+#
+# ------------------------------------------------------------------------------
+# DETAILED THEORY:
+# ------------------------------------------------------------------------------
+# 1. LINEAR REGRESSION:
+#    Linear Regression is a fundamental supervised learning and statistical
+#    technique used to model the linear relationship between a dependent (target)
+#    variable Y and one or more independent (explanatory) variables X.
+#
+# 2. SIMPLE LINEAR REGRESSION MODEL EQUATION:
+#        Y = alpha + beta * X
+#    where:
+#    - Y is the predicted dependent variable (e.g., Salary).
+#    - X is the independent variable (e.g., Experience in years).
+#    - beta is the Slope (regression coefficient): the change in Y per unit change in X.
+#    - alpha is the Intercept: the value of Y when X = 0 (Y-axis crossing point).
+#
+# 3. ORDINARY LEAST SQUARES (OLS) METHOD:
+#    In real-world data, observed points rarely lie exactly on a single line.
+#    The vertical deviation between an actual point Y_i and the fitted line Y_hat_i
+#    is the error or residual: e_i = Y_i - Y_hat_i.
+#    OLS minimizes the Sum of Squared Residuals (SSE):
+#        Minimize: SSE = SUM [ (Y_i - (alpha + beta * X_i))^2 ]
+#
+# 4. MATHEMATICAL FORMULAS:
+#    Let x_bar be the mean of X, and y_bar be the mean of Y.
+#        beta  = SUM [ (X_i - x_bar) * (Y_i - y_bar) ] / SUM [ (X_i - x_bar)^2 ]
+#        alpha = y_bar - (beta * x_bar)
+#
+# ------------------------------------------------------------------------------
+# WORKED EXAMPLE (EXPERIENCE VS SALARY):
+# ------------------------------------------------------------------------------
+# Given 5 observations:
+#    X (Years of Experience): [2.5, 4.0, 6.5, 11.0, 12.5]
+#    Y (Salary in thousands): [55,  225, 300, 350,  475]
+#
+# Step 1: Compute Means:
+#    x_bar = (2.5 + 4.0 + 6.5 + 11.0 + 12.5) / 5 = 36.5 / 5 = 7.30
+#    y_bar = (55 + 225 + 300 + 350 + 475) / 5    = 1405 / 5 = 281.00
+#
+# Step 2: Compute Sum of Deviations:
+#    SUM [ (X_i - x_bar)^2 ] = 23.04 + 10.89 + 0.64 + 13.69 + 27.04 = 75.30
+#    SUM [ (X_i - x_bar)*(Y_i - y_bar) ] = 1084.80 + 184.80 - 15.20 + 255.30 + 1008.80
+#                                        = 2518.50
+#
+# Step 3: Compute Coefficients:
+#    beta  = 2518.50 / 75.30 = 33.4462
+#    alpha = 281.00 - (33.4462 * 7.30) = 36.8427
+#    Fitted Line: Salary = 36.8427 + 33.4462 * Experience
+#
+# Step 4: Prediction for New Experience (X = 8.0 years):
+#    Predicted Salary = 36.8427 + 33.4462 * (8.0) = 304.41 thousand rupees (~₹3,04,412).
+# ==============================================================================
+
 
 # Dataset
 # X = Experience in years

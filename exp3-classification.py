@@ -1,3 +1,80 @@
+# ==============================================================================
+# EXPERIMENT 03: DECISION TREE CLASSIFICATION (ID3 ALGORITHM)
+# ==============================================================================
+#
+# AIM:
+# To understand and implement a Decision Tree Classification model using the ID3
+# (Iterative Dichotomiser 3) algorithm based on Information Gain and Entropy.
+#
+# ------------------------------------------------------------------------------
+# DETAILED THEORY:
+# ------------------------------------------------------------------------------
+# 1. CLASSIFICATION:
+#    Classification is a supervised machine learning technique where a model
+#    learns from labeled training records to predict discrete categorical class
+#    labels (e.g., buys_computer: yes/no) for new, unseen data observations.
+#
+# 2. DECISION TREE ANATOMY:
+#    - Root Node: The topmost attribute test that best splits the dataset.
+#    - Internal Nodes: Intermediate decision checks on specific attributes.
+#    - Branches: Possible values/outcomes of that attribute check.
+#    - Leaf Nodes: Terminal nodes representing the final classification label.
+#
+# 3. ID3 ALGORITHM & CORE METRICS:
+#    ID3 builds the tree top-down greedily by choosing at each node the attribute
+#    that yields the highest Information Gain (i.e., greatest entropy reduction).
+#
+#    A. ENTROPY:
+#       Measures the disorder, impurity, or uncertainty in a sample set S:
+#           Entropy(S) = - SUM [ p_i * log2(p_i) ]
+#       where p_i is the proportion of records belonging to class i.
+#       - If all instances belong to the exact same class (pure), Entropy = 0.
+#       - If classes are equally divided (50% yes, 50% no), Entropy = 1.0.
+#
+#    B. INFORMATION GAIN:
+#       The expected reduction in entropy achieved by partitioning dataset S
+#       on attribute A:
+#           Gain(S, A) = Entropy(S) - SUM [ (|S_v| / |S|) * Entropy(S_v) ]
+#       where v ranges over all possible values of attribute A, and S_v is the
+#       subset of S where attribute A takes value v.
+#
+# 4. STOPPING CRITERIA:
+#    1. All records at the current node belong to the identical class (pure leaf).
+#    2. No remaining attributes left to test (assign majority class).
+#    3. Subset of records is empty (assign parent's majority class).
+#
+# ------------------------------------------------------------------------------
+# WORKED EXAMPLE (ALLELECTRONICS DATASET):
+# ------------------------------------------------------------------------------
+# Consider 14 customer records with target 'buys_computer':
+# Total records: 14 (9 'yes', 5 'no')
+#
+# Step 1: Calculate Total Dataset Entropy:
+#    Entropy(S) = - (9/14)*log2(9/14) - (5/14)*log2(5/14) = 0.9403
+#
+# Step 2: Calculate Information Gain for Candidate Attributes:
+#    - Attribute 'Age' (youth: 2 yes/3 no; middle_aged: 4 yes/0 no; senior: 3 yes/2 no):
+#      Entropy(youth) = 0.9710, Entropy(middle_aged) = 0.0000, Entropy(senior) = 0.9710
+#      Expected Entropy E(Age) = (5/14)*0.9710 + (4/14)*0 + (5/14)*0.9710 = 0.6936
+#      Gain(S, Age) = 0.9403 - 0.6936 = 0.2467  <--- MAXIMUM GAIN!
+#
+#    - Attribute 'Student' (no: 3 yes/4 no; yes: 6 yes/1 no):
+#      E(Student) = 0.7885 => Gain(S, Student) = 0.1518
+#
+#    - Attribute 'Credit_Rating' (fair: 6 yes/2 no; excellent: 3 yes/3 no):
+#      E(Credit_Rating) = 0.8922 => Gain(S, Credit_Rating) = 0.0481
+#
+# Step 3: Root Selection & Branching:
+#    - Since Age has the maximum Information Gain (0.2467), 'Age' is the ROOT NODE.
+#    - Branch 'middle_aged': 100% 'yes' -> Leaf Node = 'yes'.
+#    - Branch 'youth': Split next on 'Student' (student='no' -> 'no', student='yes' -> 'yes').
+#    - Branch 'senior': Split next on 'Credit_Rating' (fair -> 'yes', excellent -> 'no').
+#
+# Step 4: Prediction on Unseen Sample:
+#    Test Sample: {'age': 'youth', 'student': 'yes', 'credit_rating': 'fair'}
+#    Classification Path: Age('youth') -> Student('yes') => Prediction = "yes".
+# ==============================================================================
+
 import math
 
 

@@ -1,8 +1,83 @@
-# ============================================================
-# EXPERIMENT 06 - HIERARCHICAL CLUSTERING
-# Agglomerative Hierarchical Clustering
-# Single Linkage + Euclidean Distance
-# ============================================================
+# ==============================================================================
+# EXPERIMENT 06: HIERARCHICAL CLUSTERING (AGGLOMERATIVE SINGLE LINKAGE)
+# ==============================================================================
+#
+# AIM:
+# To implement and understand Agglomerative (bottom-up) Hierarchical Clustering
+# using Euclidean Distance and Single Linkage, and trace the cluster merge hierarchy.
+#
+# ------------------------------------------------------------------------------
+# DETAILED THEORY:
+# ------------------------------------------------------------------------------
+# 1. HIERARCHICAL CLUSTERING:
+#    Hierarchical clustering builds a hierarchy of nested clusters represented
+#    as a tree diagram called a Dendrogram.
+#    Unlike K-Means:
+#    - Does not require pre-specifying the number of clusters (K) up front.
+#    - Is deterministic (no random centroid initialization dependencies).
+#
+# 2. TWO MAIN PARADIGMS:
+#    - Agglomerative (Bottom-Up): Starts with every point as an individual
+#      cluster. Iteratively merges the two closest clusters until all points
+#      unify or target K is met.
+#    - Divisive (Top-Down): Starts with all points in one master cluster and
+#      recursively splits it down.
+#
+# 3. DISTANCE & LINKAGE MEASURES:
+#    Euclidean Distance between points P(x1, y1) and Q(x2, y2):
+#        d(P, Q) = sqrt( (x1 - x2)^2 + (y1 - y2)^2 )
+#
+#    Linkage Criteria between Cluster A and Cluster B:
+#    - Single Linkage (Minimum Distance):
+#          d(A, B) = min { dist(p, q) : p in A, q in B }
+#    - Complete Linkage (Maximum Distance):
+#          d(A, B) = max { dist(p, q) : p in A, q in B }
+#    - Average Linkage:
+#          d(A, B) = (1 / (|A|*|B|)) * SUM [ dist(p, q) ]
+#    - Ward's Method:
+#          Minimizes the increase in total within-cluster variance.
+#
+# 4. DENDROGRAM:
+#    A tree visual where leaf nodes are data points and the vertical branch
+#    height reflects the distance threshold at which clusters were merged.
+#
+# ------------------------------------------------------------------------------
+# WORKED EXAMPLE (CUSTOMER AGE VS SPENDING SCORE):
+# ------------------------------------------------------------------------------
+# Target: K = 2 clusters.
+# Points: P1[18,85], P2[20,90], P3[22,80], P4[55,20], P5[60,15]
+#
+# Step 1: Initial Clusters:
+#    C1={P1}, C2={P2}, C3={P3}, C4={P4}, C5={P5}
+#
+# Step 2: Proximity Matrix (Euclidean Distances):
+#    dist(P1, P2) = sqrt((18-20)^2 + (85-90)^2) = sqrt(4+25)  = 5.39  <-- MINIMUM!
+#    dist(P1, P3) = sqrt((18-22)^2 + (85-80)^2) = sqrt(16+25) = 6.40
+#    dist(P2, P3) = sqrt((20-22)^2 + (90-80)^2) = sqrt(4+100) = 10.20
+#    dist(P4, P5) = sqrt((55-60)^2 + (20-15)^2) = sqrt(25+25) = 7.07
+#    Cross-group distances (e.g. dist(P3, P4)) are large (~68.5).
+#
+# Step 3: First Merge:
+#    Smallest distance is 5.39 between P1 and P2.
+#    Merge P1 and P2 -> New Cluster {P1, P2}.
+#    Remaining: {P1, P2}, {P3}, {P4}, {P5}.
+#
+# Step 4: Second Merge (Single Linkage):
+#    dist({P1, P2}, P3) = min(dist(P1,P3), dist(P2,P3)) = min(6.40, 10.20) = 6.40.
+#    Next minimum is 6.40 -> Merge {P1, P2} with P3 -> {P1, P2, P3}.
+#    Remaining: {P1, P2, P3}, {P4}, {P5}.
+#
+# Step 5: Third Merge:
+#    dist(P4, P5) = 7.07.
+#    dist({P1, P2, P3}, {P4}) = 68.48.
+#    Smallest is 7.07 -> Merge P4 and P5 -> {P4, P5}.
+#    Remaining: {P1, P2, P3} and {P4, P5}.
+#
+# Step 6: Target K = 2 Reached:
+#    - Cluster 1: { P1, P2, P3 } (Young, high spending score)
+#    - Cluster 2: { P4, P5 }     (Senior, low spending score)
+# ==============================================================================
+
 
 import math
 

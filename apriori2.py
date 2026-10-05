@@ -1,8 +1,72 @@
-# ============================================================
-# EXPERIMENT 07 - APRIORI ALGORITHM
-# MARKET BASKET ANALYSIS
-# WITHOUT ANY EXTERNAL LIBRARIES
-# ============================================================
+# ==============================================================================
+# EXPERIMENT 07: APRIORI ALGORITHM (PURE PYTHON / NO EXTERNAL LIBRARIES)
+# ==============================================================================
+#
+# AIM:
+# To implement and understand the Apriori association-rule mining algorithm from
+# first principles without relying on external packages, and uncover frequent
+# itemsets and strong association rules from transaction databases.
+#
+# ------------------------------------------------------------------------------
+# DETAILED THEORY:
+# ------------------------------------------------------------------------------
+# 1. MARKET BASKET ANALYSIS:
+#    Identifies buying habits and affinity relationships between products
+#    purchased concurrently by customers in retail checkout baskets.
+#
+# 2. KEY METRICS:
+#    A. Support:
+#       Frequency of itemset X across all transactions:
+#           Support(X) = (Transactions containing X) / (Total transactions N)
+#       Support Count = Count of transactions where all items of X appear together.
+#
+#    B. Confidence:
+#       Probability that transaction contains Y given it contains X:
+#           Confidence(X -> Y) = Support_Count(X U Y) / Support_Count(X) * 100%
+#
+#    C. Lift:
+#       Measures how much more often X and Y occur together than expected by chance:
+#           Lift(X -> Y) = Confidence(X -> Y) / Support(Y)
+#
+# 3. DOWNWARD-CLOSURE (APRIORI) PROPERTY:
+#    "All non-empty subsets of a frequent itemset must also be frequent."
+#    Pruning Principle:
+#    "If any (k-1)-subset of a candidate k-itemset is infrequent, the candidate
+#    cannot be frequent and is pruned immediately."
+#
+# 4. JOIN & PRUNE STEPS:
+#    - Join: Combines frequent (k-1)-itemsets that share the first (k-2) items.
+#    - Prune: Validates that all (k-1) subsets of the new candidate exist in L_{k-1}.
+#    - Support Check: Evaluates transactions against candidate and filters by min_support.
+#
+# ------------------------------------------------------------------------------
+# WORKED EXAMPLE (9 TRANSACTIONS OVER ITEMS {I1, I2, I3, I4, I5}):
+# ------------------------------------------------------------------------------
+# Total transactions N = 9. Minimum Support Count = 2. Minimum Confidence = 60%.
+#
+# Step 1: Frequent 1-Itemsets (L1):
+#    {I1}: 6, {I2}: 7, {I3}: 6, {I4}: 2, {I5}: 2 (All >= 2 => All in L1).
+#
+# Step 2: Frequent 2-Itemsets (L2):
+#    Join L1 with L1 -> C2. Scan DB:
+#    {I1, I2}: 4, {I1, I3}: 4, {I1, I5}: 2, {I2, I3}: 4, {I2, I4}: 2, {I2, I5}: 2.
+#    Pairs below threshold (e.g. {I1, I4}: 1, {I3, I4}: 0) are eliminated.
+#
+# Step 3: Candidate 3-Itemsets (C3) & Pruning:
+#    Joining L2 gives candidate {I1, I2, I3} and {I1, I2, I5}.
+#    Candidate {I2, I3, I4} has subset {I3, I4} not in L2 -> PRUNED!
+#    Support counts for valid candidates:
+#    - Support({I1, I2, I3}) = 2 >= 2
+#    - Support({I1, I2, I5}) = 2 >= 2
+#    L3 = { {I1, I2, I3}: 2, {I1, I2, I5}: 2 }.
+#
+# Step 4: Association Rule & Confidence Calculation:
+#    For frequent itemset {I1, I2} with support count = 4:
+#    Rule: {I1} -> {I2}
+#    Confidence = Support_Count({I1, I2}) / Support_Count({I1})
+#               = 4 / 6 = 66.67% (>= 60% min_conf => STRONG RULE!)
+# ==============================================================================
+
 
 
 # ------------------------------------------------------------

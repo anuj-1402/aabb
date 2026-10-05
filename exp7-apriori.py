@@ -1,5 +1,76 @@
 
 
+# ==============================================================================
+# EXPERIMENT 07: APRIORI ALGORITHM FOR MARKET BASKET ANALYSIS
+# ==============================================================================
+#
+# AIM:
+# To implement and understand the Apriori association-rule mining algorithm for
+# discovering frequent itemsets and calculating rule confidence in transaction databases.
+#
+# ------------------------------------------------------------------------------
+# DETAILED THEORY:
+# ------------------------------------------------------------------------------
+# 1. MARKET BASKET ANALYSIS:
+#    A data mining technique used to uncover interesting relationships and buying
+#    patterns between items frequently co-purchased in customer transactions.
+#
+# 2. KEY METRICS:
+#    A. Support:
+#       The proportion of transactions in database D containing itemset X:
+#           Support(X) = (Transactions containing X) / (Total transactions N)
+#       Support Count: Absolute number of transactions containing X.
+#
+#    B. Confidence:
+#       The conditional probability that a customer purchases Y given they bought X:
+#           Confidence(X -> Y) = Support(X U Y) / Support(X)
+#                              = Support_Count(X U Y) / Support_Count(X)
+#
+#    C. Lift:
+#       Measures how much more often X and Y occur together than expected by chance:
+#           Lift(X -> Y) = Confidence(X -> Y) / Support(Y)
+#
+# 3. THE APRIORI PROPERTY (DOWNWARD-CLOSURE / ANTI-MONOTONE):
+#    "All non-empty subsets of a frequent itemset must also be frequent."
+#    Pruning Corollary:
+#    "If an itemset is infrequent (support < min_support), then NONE of its
+#    supersets can ever be frequent."
+#
+# 4. LEVEL-WISE SEARCH PROCEDURE:
+#    1. Scan DB to generate candidate 1-itemsets (C1) and find frequent 1-itemsets (L1).
+#    2. Join Step: Join L_{k-1} with itself to produce candidate k-itemsets (C_k).
+#    3. Prune Step: Discard any candidate in C_k if any of its (k-1) subsets is not in L_{k-1}.
+#    4. Scan DB to count support of remaining candidates to produce L_k.
+#    5. Terminate when no further candidates can be generated.
+#
+# ------------------------------------------------------------------------------
+# WORKED EXAMPLE (9 TRANSACTIONS OVER ITEMS {I1, I2, I3, I4, I5}):
+# ------------------------------------------------------------------------------
+# Total transactions: N = 9. Minimum Support Count = 2. Minimum Confidence = 60%.
+#
+# Step 1: Frequent 1-Itemsets (L1):
+#    {I1}: 6, {I2}: 7, {I3}: 6, {I4}: 2, {I5}: 2 (All >= 2 => All in L1).
+#
+# Step 2: Frequent 2-Itemsets (L2):
+#    Join L1 with L1 -> C2. Scan DB:
+#    {I1, I2}: 4, {I1, I3}: 4, {I1, I5}: 2, {I2, I3}: 4, {I2, I4}: 2, {I2, I5}: 2.
+#    Infrequent pairs like {I1, I4} (count=1), {I3, I4} (count=0) are dropped.
+#
+# Step 3: Candidate 3-Itemsets (C3) & Pruning:
+#    Joining L2 gives candidate {I1, I2, I3} and {I1, I2, I5}.
+#    Candidate {I2, I3, I4} has subset {I3, I4} not in L2 -> PRUNED!
+#    Support counts for valid candidates:
+#    - Support({I1, I2, I3}) = 2 >= 2
+#    - Support({I1, I2, I5}) = 2 >= 2
+#    L3 = { {I1, I2, I3}: 2, {I1, I2, I5}: 2 }.
+#
+# Step 4: Association Rule & Confidence Calculation:
+#    For frequent itemset {I1, I2} with support count = 4:
+#    Rule: {I1} -> {I2}
+#    Confidence = Support_Count({I1, I2}) / Support_Count({I1})
+#               = 4 / 6 = 66.67% (>= 60% min_conf => STRONG RULE!)
+# ==============================================================================
+
 from itertools import combinations
 
 
