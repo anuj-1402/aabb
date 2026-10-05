@@ -1,0 +1,1035 @@
+================================================================================
+DATA MINING & DATA WAREHOUSING (DWM)
+EXPERIMENTS 1 TO 7: COMPLETE THEORY WITH WORKED EXAMPLES
+================================================================================
+
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. EXPERIMENT 1: Data Warehouse, Data Mart & Dimensional Data Modeling
+                 (Star Schema, Snowflake Schema, Fact Constellation, ETL)
+2. EXPERIMENT 2: OLAP Operations
+                 (Slice, Dice, Drill-Down, Roll-Up, Pivot, Data Cube)
+3. EXPERIMENT 3: Classification using Decision Tree (ID3 / C4.5)
+                 (Entropy, Information Gain, Tree Construction, Prediction)
+4. EXPERIMENT 4: Linear Regression
+                 (Least Squares Method, Slope, Intercept, Error, Prediction)
+5. EXPERIMENT 5: Clustering using K-Means
+                 (Centroid Initialization, Euclidean Distance, Convergence, Elbow Method)
+6. EXPERIMENT 6: Hierarchical Clustering
+                 (Agglomerative vs Divisive, Single Linkage, Dendrogram Trace)
+7. EXPERIMENT 7: Apriori Algorithm for Market Basket Analysis
+                 (Support, Confidence, Lift, Apriori Property, Join & Prune)
+8. APPENDIX: VIVA VOCE FREQUENTLY ASKED QUESTIONS & QUICK REVISION
+================================================================================
+
+
+================================================================================
+EXPERIMENT NO. 1
+DATA WAREHOUSE / DATA MART & DIMENSIONAL DATA MODELING
+================================================================================
+
+1. AIM:
+To understand the concepts of Data Warehousing, identify source tables, and
+design Star Schema, Snowflake Schema, and Fact Constellation (Galaxy) Schema
+for an analytical business system.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is a Data Warehouse (DW)?
+A Data Warehouse is a centralized repository that stores integrated, time-variant,
+subject-oriented, and non-volatile data gathered from multiple operational and
+external sources. It is specifically designed to support analytical reporting,
+Online Analytical Processing (OLAP), data mining, and executive decision-making.
+
+2.2 Core Characteristics of a Data Warehouse (W. H. Inmon):
+1. Subject-Oriented: Data is organized around high-level business entities (such
+   as Sales, Customers, Products, or Inventory) rather than daily operations.
+2. Integrated: Data collected from disparate operational systems (relational
+   databases, flat files, logs) is cleaned, resolved, and unified into a single
+   consistent format (e.g., standardizing gender codes 'M/F' vs '1/0').
+3. Time-Variant: Every data record contains an explicit time element (DateID,
+   Timestamp). Data is stored over a long historical horizon (5–10 years) to
+   enable trend analysis.
+4. Non-Volatile: Once data is loaded into the warehouse through batch ETL runs,
+   it is read-only. It is not modified or deleted during routine user queries.
+
+2.3 What is a Data Mart?
+A Data Mart is a focused, subject-specific subset of a Data Warehouse built for
+the analytical needs of a particular business unit or department (e.g., Sales
+Data Mart, Finance Data Mart, HR Data Mart).
+- Dependent Data Mart: Sourced directly from an enterprise data warehouse.
+- Independent Data Mart: Sourced directly from operational databases without an
+  enterprise warehouse.
+
+2.4 OLTP vs OLAP Architecture:
++---------------------+------------------------------+-----------------------------+
+| Feature             | OLTP (Transactional)         | OLAP (Analytical)           |
++---------------------+------------------------------+-----------------------------+
+| Purpose             | Day-to-day operations        | Analysis & decision making  |
+| Database Design     | Normalized (3NF / BCNF)      | Denormalized (Star/Snowflake|
+| Data Content        | Current, up-to-date data     | Historical, multi-year data |
+| Read vs Write       | Heavy write/update frequency | Heavy read/complex queries  |
+| Query Response      | Milliseconds (simple SQL)    | Seconds to minutes (OLAP)   |
+| Primary Users       | Clerks, cashiers, apps       | Business analysts, managers |
++---------------------+------------------------------+-----------------------------+
+
+2.5 What is Dimensional Data Modeling?
+Dimensional modeling is a design technique for analytical databases. It breaks
+down data into:
+- Facts (Measures): Quantitative, numeric metrics resulting from a business
+  process (e.g., Sales Amount, Quantity Sold, Profit, Cost).
+- Dimensions: Descriptive contextual attributes that give meaning to the facts
+  (e.g., Who bought it? Customer. What was bought? Product. Where? Store.
+   When? Date).
+
+2.6 Fact Table:
+Contains primary keys as foreign keys referencing dimension tables, along with
+numerical additive/semi-additive/non-additive measures.
+- Additive: Can be summed across all dimensions (e.g., Sales Amount).
+- Semi-Additive: Can be summed across some dimensions but not others (e.g., Account Balance).
+- Non-Additive: Cannot be summed across any dimension (e.g., Unit Price, Percentage Margin).
+
+2.7 Dimension Table:
+Contains descriptive text attributes organized in hierarchies (e.g., Day -> Month -> Quarter -> Year).
+Dimension tables provide filtering, slicing, grouping, and labeling capabilities.
+
+2.8 Dimensional Schemas:
+
+A. STAR SCHEMA:
+- Structure: A single central fact table directly joined to multiple denormalized
+  dimension tables.
+- Visual: Looks like a star with rays radiating from the center.
+- Pros: Simple to understand, fewer SQL table joins, fast query execution.
+- Cons: Dimension tables contain repeated/redundant strings (denormalized).
+
+B. SNOWFLAKE SCHEMA:
+- Structure: An extension of the Star Schema where dimension tables are normalized
+  into sub-dimension tables (e.g., Product_Dim links to Category_Dim and Brand_Dim).
+- Visual: Resembles a snowflake with complex branching branches.
+- Pros: Eliminates data redundancy in dimension tables; easier maintenance.
+- Cons: Requires multiple table joins in queries, degrading query performance.
+
+C. FACT CONSTELLATION (GALAXY) SCHEMA:
+- Structure: Contains multiple fact tables that share common ("conformed")
+  dimension tables.
+- Example: Sales_Fact and Returns_Fact both sharing Date_Dim, Product_Dim, and Store_Dim.
+- Pros: Accurately models sophisticated enterprise-wide business processes.
+- Cons: High structural complexity and administration overhead.
+
+2.9 ETL (Extract, Transform, Load) Process:
+1. Extract: Ingest raw data from diverse sources (PostgreSQL, ERP, flat CSVs).
+2. Transform: Clean missing values, remove duplicates, reconcile key formats,
+   convert currencies, and apply business logic.
+3. Load: Efficiently bulk-load cleaned dimensional structures into the DW.
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: RETAIL SALES DATA MART
+--------------------------------------------------------------------------------
+
+Consider a retail electronics store chain (e.g., "MegaStore").
+
+3.1 Source Tables & Attributes:
+- Product Table:   ProductID, ProductName, Category, Brand, Price
+- Customer Table:  CustomerID, CustomerName, Gender, City
+- Store Table:     StoreID, StoreName, LocationCity, State
+- Date Table:      DateID, FullDate, DayOfWeek, Month, Quarter, Year
+- Transaction:     TransactionID, ProductID, CustomerID, StoreID, DateID,
+                   Quantity, SalesAmount
+
+3.2 Sample Data Records:
+
+[Product_Dim]
++-----------+-------------+-------------+----------+--------+
+| ProductID | ProductName | Category    | Brand    | Price  |
++-----------+-------------+-------------+----------+--------+
+| P001      | Laptop      | Electronics | Dell     | 55000  |
+| P002      | Mouse       | Electronics | Logitech | 800    |
+| P003      | Keyboard    | Electronics | HP       | 1500   |
+| P004      | Study Desk  | Furniture   | Godrej   | 7000   |
++-----------+-------------+-------------+----------+--------+
+
+[Customer_Dim]
++------------+--------------+--------+---------+
+| CustomerID | CustomerName | Gender | City    |
++------------+--------------+--------+---------+
+| C001       | Alice        | Female | Mumbai  |
+| C002       | Bob          | Male   | Pune    |
+| C003       | Charlie      | Male   | Delhi   |
++------------+--------------+--------+---------+
+
+[Sales_Fact]
++---------------+-----------+------------+---------+--------+-----+-------------+
+| TransactionID | ProductID | CustomerID | StoreID | DateID | Qty | SalesAmount |
++---------------+-----------+------------+---------+--------+-----+-------------+
+| T001          | P001      | C001       | S001    | D001   | 1   | 55000       |
+| T002          | P002      | C002       | S002    | D001   | 2   | 1600        |
+| T003          | P003      | C003       | S001    | D002   | 1   | 1500        |
+| T004          | P004      | C001       | S002    | D002   | 1   | 7000        |
++---------------+-----------+------------+---------+--------+-----+-------------+
+
+3.3 Star Schema Diagram Representation:
+
+                     +------------------+
+                     |   Customer_Dim   |
+                     +------------------+
+                     | * CustomerID     |
+                     |   CustomerName   |
+                     |   Gender         |
+                     |   City           |
+                     +--------+---------+
+                              |
+                              |
++------------------+          |          +------------------+
+|   Product_Dim    |          |          |    Store_Dim     |
++------------------+          |          +------------------+
+| * ProductID      |          |          | * StoreID        |
+|   ProductName    |----+     |     +----|   StoreName      |
+|   Category       |    |     |     |    |   LocationCity   |
+|   Brand          |    |     |     |    |   State          |
+|   Price          |    |     |     |    +------------------+
++------------------+    |     |     |
+                        v     v     v
+                     +------------------+
+                     |    Sales_Fact    |
+                     +------------------+
+                     | * TransactionID  |
+                     | # ProductID (FK) |
+                     | # CustomerID(FK) |
+                     | # StoreID   (FK) |
+                     | # DateID    (FK) |
+                     |   Quantity       |
+                     |   SalesAmount    |
+                     +--------+---------+
+                              ^
+                              |
+                     +--------+---------+
+                     |     Date_Dim     |
+                     +------------------+
+                     | * DateID         |
+                     |   FullDate       |
+                     |   Month          |
+                     |   Quarter        |
+                     |   Year           |
+                     +------------------+
+
+3.4 Snowflake Normalization Example:
+In the Snowflake Schema:
+- Product_Dim splits into:
+    Product_Dim(ProductID, ProductName, CategoryID, BrandID, Price)
+    Category_Dim(CategoryID, CategoryName)
+    Brand_Dim(BrandID, BrandName)
+- Customer_Dim splits into:
+    Customer_Dim(CustomerID, CustomerName, Gender, CityID)
+    City_Dim(CityID, CityName, StateID)
+
+3.5 Fact Constellation (Galaxy Schema) Example:
+Two fact tables share conformed dimensions:
+- Fact Table 1: Sales_Fact(TransactionID, ProductID, CustomerID, StoreID, DateID, Qty, Amount)
+- Fact Table 2: Returns_Fact(ReturnID, ProductID, CustomerID, StoreID, DateID, ReturnQty, RefundAmount)
+- Shared Dimensions: Product_Dim, Customer_Dim, Store_Dim, Date_Dim.
+
+
+================================================================================
+EXPERIMENT NO. 2
+OLAP OPERATIONS (SLICE, DICE, DRILL-DOWN, ROLL-UP, PIVOT)
+================================================================================
+
+1. AIM:
+To understand Online Analytical Processing (OLAP) concepts and perform Slice,
+Dice, Drill-down, Roll-up, and Pivot operations on a multidimensional data cube.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is an OLAP Cube (Data Cube)?
+A multidimensional data model that represents data along multiple axes
+(dimensions) with numeric measurements (facts) at the intersections.
+A 3-dimensional data cube could represent:
+- Dimension 1: Location (Mumbai, Delhi, Pune)
+- Dimension 2: Product (Laptop, Phone, Tablet)
+- Dimension 3: Time (Q1, Q2, Q3, Q4)
+At each intersection cell, the measure is Sales Revenue (in INR).
+
+2.2 The 5 Primary OLAP Operations:
+
+1. SLICE:
+   - Meaning: Takes a single slice of the cube by setting a single specific value
+     for one dimension, reducing dimensionality by one (e.g., from 3D to 2D).
+   - Concept: "Fix one dimension".
+   - Example: Choose Time = "Q1". The resulting view displays sales of all Products
+     across all Locations, strictly for Q1.
+
+2. DICE:
+   - Meaning: Defines a sub-cube by selecting specific values or ranges across two
+     or more dimensions.
+   - Concept: "Filter on multiple dimensions simultaneously".
+   - Example: Select (Product in {Laptop, Phone}) AND (Location in {Mumbai, Pune})
+     AND (Time = "Q1").
+
+3. DRILL-DOWN:
+   - Meaning: Navigates from summarized (aggregated) data to more detailed data.
+     It moves down a dimension hierarchy.
+   - Concept: "Increase detail, decrease abstraction".
+   - Example: Moving from Year -> Quarter -> Month -> Day, or Country -> State -> City.
+
+4. ROLL-UP (DRILL-UP):
+   - Meaning: Aggregates detailed data up to a higher conceptual level along a dimension
+     hierarchy, or removes a dimension entirely.
+   - Concept: "Summarize data, decrease detail".
+   - Example: Rolling up daily sales into monthly totals, or city sales into country totals.
+
+5. PIVOT (ROTATE):
+   - Meaning: Rotates the data axes in the report to provide an alternative perspective.
+   - Concept: Swap rows and columns without changing underlying values.
+   - Example: Swapping Products on rows and Cities on columns so that Cities become rows
+     and Products become columns.
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: 3D ELECTRONICS SALES DATA CUBE
+--------------------------------------------------------------------------------
+
+Let our dimensions be:
+- Location: {Mumbai, Pune}
+- Product:  {Laptop, Mobile}
+- Time:     {Q1, Q2}
+Measure: Sales Amount (in ₹ Lakhs)
+
+Base Multidimensional Data:
++----------+----------+------+--------------+
+| Location | Product  | Time | Sales (Lakh) |
++----------+----------+------+--------------+
+| Mumbai   | Laptop   | Q1   | 100          |
+| Mumbai   | Laptop   | Q2   | 120          |
+| Mumbai   | Mobile   | Q1   | 80           |
+| Mumbai   | Mobile   | Q2   | 90           |
+| Pune     | Laptop   | Q1   | 60           |
+| Pune     | Laptop   | Q2   | 75           |
+| Pune     | Mobile   | Q1   | 40           |
+| Pune     | Mobile   | Q2   | 50           |
++----------+----------+------+--------------+
+
+3.1 SLICE OPERATION EXAMPLE:
+Condition: Fix Time = "Q1"
+Resulting 2D Table (Location vs Product for Q1):
++----------+--------+--------+
+| Location | Laptop | Mobile |
++----------+--------+--------+
+| Mumbai   | 100    | 80     |
+| Pune     | 60     | 40     |
++----------+--------+--------+
+
+3.2 DICE OPERATION EXAMPLE:
+Condition: Location = {Mumbai}, Product = {Laptop, Mobile}, Time = {Q1, Q2}
+Resulting Sub-cube Table:
++----------+---------+------+-------+
+| Location | Product | Time | Sales |
++----------+---------+------+-------+
+| Mumbai   | Laptop  | Q1   | 100   |
+| Mumbai   | Laptop  | Q2   | 120   |
+| Mumbai   | Mobile  | Q1   | 80    |
+| Mumbai   | Mobile  | Q2   | 90    |
++----------+---------+------+-------+
+
+3.3 ROLL-UP OPERATION EXAMPLE:
+Roll up Time from Quarter (Q1, Q2) to Half-Year (H1):
+Sales are summed across Q1 + Q2:
+- Mumbai, Laptop: 100 + 120 = 220
+- Mumbai, Mobile: 80 + 90   = 170
+- Pune, Laptop:   60 + 75   = 135
+- Pune, Mobile:   40 + 50   = 90
+Summary Table:
++----------+--------+--------+-------------+
+| Location | Laptop | Mobile | Total Sales |
++----------+--------+--------+-------------+
+| Mumbai   | 220    | 170    | 390         |
+| Pune     | 135    | 90     | 225         |
++----------+--------+--------+-------------+
+
+3.4 DRILL-DOWN OPERATION EXAMPLE:
+Drill down from Quarter Q1 to individual months:
+Suppose Q1 contains {January, February, March}:
+Mumbai Laptop Q1 (100 Lakhs) drills down into:
+- January:  35 Lakhs
+- February: 30 Lakhs
+- March:    35 Lakhs
+
+3.5 PIVOT OPERATION EXAMPLE:
+Original Table:
+Rows = Location, Columns = Product (for Q1)
++----------+--------+--------+
+| Location | Laptop | Mobile |
++----------+--------+--------+
+| Mumbai   | 100    | 80     |
+| Pune     | 60     | 40     |
++----------+--------+--------+
+
+Pivoted Table (Rows = Product, Columns = Location):
++---------+--------+------+
+| Product | Mumbai | Pune |
++---------+--------+------+
+| Laptop  | 100    | 60   |
+| Mobile  | 80     | 40   |
++---------+--------+------+
+
+
+================================================================================
+EXPERIMENT NO. 3
+CLASSIFICATION USING DECISION TREE (ID3 / C4.5)
+================================================================================
+
+1. AIM:
+To implement and understand the Decision Tree induction algorithm using the ID3
+(Iterative Dichotomiser 3) algorithm based on Information Gain and Entropy.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is Classification?
+Classification is a supervised machine learning task where a model learns from
+labeled training instances (where the target category/class is known) to predict
+the discrete class label of unseen testing instances.
+
+2.2 Decision Tree Anatomy:
+- Root Node: The topmost attribute that best partitions the dataset.
+- Internal Nodes: Intermediate decision checks on a specific attribute.
+- Branches: The possible values/outcomes of that attribute check.
+- Leaf Nodes: Terminal nodes representing the final classification label.
+
+2.3 ID3 Algorithm Core Concepts:
+ID3 builds the tree top-down in a greedy manner using Information Gain as the
+attribute selection measure. At each step, it chooses the attribute that gives
+the highest Information Gain (i.e., reduces entropy the most).
+
+2.4 Entropy:
+Entropy measures the impurity, disorder, or unpredictability of a dataset.
+Formula:
+    Entropy(S) = - SUM [ p_i * log2(p_i) ]
+where:
+- S is the collection of training examples.
+- p_i is the proportion of examples belonging to class i.
+- If all samples belong to the exact same class, Entropy = 0 (pure).
+- If samples are equally split between two classes (50% Yes, 50% No),
+  Entropy = -(0.5 * log2(0.5)) - (0.5 * log2(0.5)) = 1.0 (maximum disorder).
+
+2.5 Information Gain:
+Information Gain is the expected reduction in entropy achieved by partitioning
+the dataset S on an attribute A:
+    Gain(S, A) = Entropy(S) - SUM [ (|S_v| / |S|) * Entropy(S_v) ]
+where:
+- v represents each distinct value of attribute A.
+- S_v is the subset of S where attribute A has value v.
+- |S_v| / |S| is the weight of subset S_v.
+
+2.6 Stopping Criteria in Tree Induction:
+1. All records in the current node belong to the same class label (pure leaf node).
+2. There are no remaining candidate attributes to split on (assign majority class).
+3. The dataset subset at that branch becomes empty (assign parent's majority class).
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: ALLELECTRONICS DATASET
+--------------------------------------------------------------------------------
+
+Target Attribute: buys_computer (yes / no)
+Total Instances: 14 records
+
+Dataset Table:
++----+-------------+---------+---------------+---------------+
+| ID | Age         | Student | Credit_Rating | Buys_Computer |
++----+-------------+---------+---------------+---------------+
+| 1  | youth       | no      | fair          | no            |
+| 2  | youth       | no      | excellent     | no            |
+| 3  | middle_aged | no      | fair          | yes           |
+| 4  | senior      | no      | fair          | yes           |
+| 5  | senior      | no      | fair          | yes           |
+| 6  | senior      | yes     | excellent     | no            |
+| 7  | middle_aged | yes     | excellent     | yes           |
+| 8  | youth       | no      | fair          | no            |
+| 9  | youth       | yes     | fair          | yes           |
+| 10 | senior      | yes     | fair          | yes           |
+| 11 | youth       | yes     | excellent     | yes           |
+| 12 | middle_aged | no      | excellent     | yes           |
+| 13 | middle_aged | yes     | fair          | yes           |
+| 14 | senior      | no      | excellent     | no            |
++----+-------------+---------+---------------+---------------+
+
+Class Distribution:
+- Total records: 14
+- buys_computer = 'yes': 9
+- buys_computer = 'no':  5
+
+Step 1: Calculate Total Dataset Entropy:
+Entropy(S) = - (9/14) * log2(9/14) - (5/14) * log2(5/14)
+           = - (0.6429 * -0.6374) - (0.3571 * -1.4854)
+           = 0.4098 + 0.5305
+           = 0.9403
+
+Step 2: Calculate Information Gain for Each Candidate Attribute:
+
+A. Attribute: 'Age' (Values: youth=5, middle_aged=4, senior=5)
+- For Age = 'youth' (5 instances: 2 yes, 3 no):
+  Entropy(S_youth) = - (2/5)log2(2/5) - (3/5)log2(3/5) = 0.9710
+- For Age = 'middle_aged' (4 instances: 4 yes, 0 no):
+  Entropy(S_middle_aged) = 0 (completely pure!)
+- For Age = 'senior' (5 instances: 3 yes, 2 no):
+  Entropy(S_senior) = - (3/5)log2(3/5) - (2/5)log2(2/5) = 0.9710
+
+Weighted Entropy for Age:
+E(Age) = (5/14)*0.9710 + (4/14)*0 + (5/14)*0.9710 = 0.3468 + 0 + 0.3468 = 0.6936
+Gain(S, Age) = Entropy(S) - E(Age) = 0.9403 - 0.6936 = 0.2467
+
+B. Attribute: 'Student' (Values: no=7, yes=7)
+- Student = 'no'  (7 instances: 3 yes, 4 no) -> Entropy = 0.9852
+- Student = 'yes' (7 instances: 6 yes, 1 no) -> Entropy = 0.5917
+E(Student) = (7/14)*0.9852 + (7/14)*0.5917 = 0.7885
+Gain(S, Student) = 0.9403 - 0.7885 = 0.1518
+
+C. Attribute: 'Credit_Rating' (Values: fair=8, excellent=6)
+- Credit = 'fair'      (8 instances: 6 yes, 2 no) -> Entropy = 0.8113
+- Credit = 'excellent' (6 instances: 3 yes, 3 no) -> Entropy = 1.0000
+E(Credit) = (8/14)*0.8113 + (6/14)*1.0000 = 0.8922
+Gain(S, Credit) = 0.9403 - 0.8922 = 0.0481
+
+Summary of Gains:
+- Gain(Age)           = 0.2467  <--- HIGHEST GAIN!
+- Gain(Student)       = 0.1518
+- Gain(Credit_Rating) = 0.0481
+
+Step 3: Root Selection & Recursive Splitting:
+Since Age has the maximum Information Gain, it is chosen as the ROOT NODE.
+- If Age = 'middle_aged': All 4 records are 'yes'. Pure Leaf Node -> 'yes'.
+- If Age = 'youth': Next best split is 'student':
+    * student = 'no'  -> 'no'
+    * student = 'yes' -> 'yes'
+- If Age = 'senior': Next best split is 'credit_rating':
+    * credit_rating = 'fair'      -> 'yes'
+    * credit_rating = 'excellent' -> 'no'
+
+Constructed Decision Tree Structure:
+                    [ Age? ]
+                   /   |    \
+            youth /    |     \ senior
+                 /     |      \
+        [ Student? ]  'yes'   [ Credit_Rating? ]
+        /         \               /         \
+    no /           \ yes    fair /           \ excellent
+      v             v           v             v
+    'no'          'yes'       'yes'          'no'
+
+Step 4: Classification of Test Samples:
+- Test 1: {'age': 'youth', 'student': 'yes', 'credit_rating': 'fair'}
+  Trace: Age='youth' -> Student='yes' => Prediction: "yes"
+- Test 2: {'age': 'senior', 'student': 'no', 'credit_rating': 'excellent'}
+  Trace: Age='senior' -> Credit_Rating='excellent' => Prediction: "no"
+
+
+================================================================================
+EXPERIMENT NO. 4
+LINEAR REGRESSION
+================================================================================
+
+1. AIM:
+To implement Simple Linear Regression using the Ordinary Least Squares (OLS)
+method to model the relationship between an independent variable and a dependent
+variable, and perform continuous value predictions.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is Linear Regression?
+Linear Regression is a fundamental supervised learning and statistical technique
+used for predicting continuous numerical target outputs.
+In Simple Linear Regression:
+- One independent (predictor/explanatory) variable: X
+- One dependent (response/target) variable: Y
+
+2.2 The Linear Model Equation:
+    Y = alpha + beta * X
+where:
+- beta (Slope): The rate of change in Y per unit increase in X.
+- alpha (Intercept): The value of Y when X = 0 (where the line crosses the Y-axis).
+
+2.3 Ordinary Least Squares (OLS) Principle:
+In any real dataset, points rarely fall perfectly on a straight line. The vertical
+distance between an observed value Y_i and the predicted line Y_hat is the error
+or residual:
+    e_i = Y_i - Y_hat_i
+The OLS method finds the unique alpha and beta that minimize the Sum of Squared
+Errors (SSE):
+    Minimize: SSE = SUM [ (Y_i - (alpha + beta * X_i))^2 ]
+
+2.4 Formula for Slope (beta) and Intercept (alpha):
+Let x_bar be the mean of X, and y_bar be the mean of Y.
+    beta = SUM [ (X_i - x_bar) * (Y_i - y_bar) ] / SUM [ (X_i - x_bar)^2 ]
+    alpha = y_bar - (beta * x_bar)
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: EXPERIENCE VS SALARY
+--------------------------------------------------------------------------------
+
+Dataset:
+X (Experience in years): [2.5, 4.0, 6.5, 11.0, 12.5]
+Y (Salary in thousands): [55,  225, 300, 350,  475]
+Number of data points: n = 5
+
+Step 1: Calculate Means:
+x_bar = (2.5 + 4.0 + 6.5 + 11.0 + 12.5) / 5 = 36.5 / 5 = 7.30
+y_bar = (55 + 225 + 300 + 350 + 475) / 5   = 1405 / 5 = 281.00
+
+Step 2: Compute Deviations and Products:
++------+-----+-----+---------+---------+---------------+---------------+
+| i    | X_i | Y_i | X-x_bar | Y-y_bar | (X-x_bar)^2   | (X-x)*(Y-y)   |
++------+-----+-----+---------+---------+---------------+---------------+
+| 1    | 2.5 | 55  | -4.80   | -226.0  | 23.04         | 1084.80       |
+| 2    | 4.0 | 225 | -3.30   | -56.0   | 10.89         | 184.80        |
+| 3    | 6.5 | 300 | -0.80   | +19.0   | 0.64          | -15.20        |
+| 4    | 11.0| 350 | +3.70   | +69.0   | 13.69         | 255.30        |
+| 5    | 12.5| 475 | +5.20   | +194.0  | 27.04         | 1008.80       |
++------+-----+-----+---------+---------+---------------+---------------+
+| SUM  |     |     |         |         | 75.30         | 2518.50       |
++------+-----+-----+---------+---------+---------------+---------------+
+
+Step 3: Calculate Slope (beta) and Intercept (alpha):
+beta  = Numerator / Denominator
+      = 2518.50 / 75.30
+      = 33.4462
+
+alpha = y_bar - (beta * x_bar)
+      = 281.00 - (33.4462 * 7.30)
+      = 281.00 - 244.1573
+      = 36.8427
+
+Linear Model Equation:
+    Salary (in thousands) = 36.8427 + 33.4462 * Experience
+
+Step 4: Model Verification (Actual vs Predicted):
+- For X = 2.5:  Y_pred = 36.84 + 33.45*(2.5)  = 120.46 (Actual = 55)
+- For X = 4.0:  Y_pred = 36.84 + 33.45*(4.0)  = 170.63 (Actual = 225)
+- For X = 6.5:  Y_pred = 36.84 + 33.45*(6.5)  = 254.24 (Actual = 300)
+- For X = 11.0: Y_pred = 36.84 + 33.45*(11.0) = 404.75 (Actual = 350)
+- For X = 12.5: Y_pred = 36.84 + 33.45*(12.5) = 454.92 (Actual = 475)
+
+Step 5: Prediction for New Unseen Experience (X = 8.0 years):
+Y_pred = 36.8427 + 33.4462 * (8.0)
+       = 36.8427 + 267.5696
+       = 304.4123 thousand rupees (approx. ₹3,04,412)
+
+
+================================================================================
+EXPERIMENT NO. 5
+CLUSTERING USING K-MEANS
+================================================================================
+
+1. AIM:
+To implement and understand the K-Means clustering algorithm, perform distance-based
+partitioning on multi-attribute data, and examine cluster convergence.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is Clustering?
+Clustering is an unsupervised machine learning technique where unlabelled data
+is grouped into distinct subsets (clusters) such that objects within the same
+cluster have high intra-cluster similarity, while objects in different clusters
+have high inter-cluster dissimilarity.
+
+2.2 K-Means Clustering Fundamentals:
+K-Means is a centroid-based partitioning algorithm that divides n observations
+into K predetermined clusters.
+- Centroid: The mean coordinate position of all points assigned to a cluster.
+- Objective: Minimize the Within-Cluster Sum of Squared Errors (Inertia / SSE):
+    SSE = SUM_k [ SUM_{x in C_k} ||x - c_k||^2 ]
+
+2.3 Euclidean Distance Formula:
+Between a point P = (x1, y1) and centroid C = (c1, c2):
+    d(P, C) = sqrt( (x1 - c1)^2 + (y1 - c2)^2 )
+
+2.4 K-Means Step-by-Step Algorithm:
+1. Choose K (number of clusters).
+2. Initialize K centroids randomly from the dataset or feature space.
+3. Assignment Step: Compute the distance from each point to every centroid.
+   Assign each point to its nearest centroid.
+4. Update Step: Recalculate each centroid as the geometric mean of all points
+   assigned to that cluster:
+       c_k = (1 / |C_k|) * SUM_{x in C_k} x
+5. Convergence Check: Repeat steps 3 and 4 until centroids stop changing position
+   (or points stop jumping clusters), or until a maximum iteration count is hit.
+
+2.5 Determining Optimal K: The Elbow Method:
+Plot SSE (Inertia) on the Y-axis against candidate values of K on the X-axis.
+As K increases, SSE naturally drops. The point where the rate of decrease abruptly
+slows down forms an "elbow" shape, indicating the optimal balance of compact
+clusters without overfitting.
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: 1D / 2D STUDENT PERFORMANCE
+--------------------------------------------------------------------------------
+
+Let K = 2 clusters.
+Dataset Points (e.g., Math score, Science score):
+- P1 = (2, 10)
+- P2 = (2, 5)
+- P3 = (8, 4)
+- P4 = (5, 8)
+- P5 = (7, 5)
+- P6 = (6, 4)
+- P7 = (1, 2)
+- P8 = (4, 9)
+
+Iteration 1:
+Step 1: Choose 2 initial centroids arbitrarily:
+Centroid C1 = P1 = (2, 10)
+Centroid C2 = P2 = (2, 5)
+
+Step 2: Distance Calculation for each point:
+- For P1(2,10): d(P1, C1) = 0;       d(P1, C2) = 5.00  --> Assign to Cluster 1
+- For P2(2,5):  d(P2, C1) = 5.00;    d(P2, C2) = 0     --> Assign to Cluster 2
+- For P3(8,4):  d(P3, C1) = sqrt(36+36)=8.49; d(P3, C2) = sqrt(36+1)=6.08 --> Cluster 2
+- For P4(5,8):  d(P4, C1) = sqrt(9+4)=3.61;   d(P4, C2) = sqrt(9+9)=4.24  --> Cluster 1
+- For P5(7,5):  d(P5, C1) = sqrt(25+25)=7.07; d(P5, C2) = sqrt(25+0)=5.00 --> Cluster 2
+- For P6(6,4):  d(P6, C1) = sqrt(16+36)=7.21; d(P6, C2) = sqrt(16+1)=4.12 --> Cluster 2
+- For P7(1,2):  d(P7, C1) = sqrt(1+64)=8.06;  d(P7, C2) = sqrt(1+9)=3.16  --> Cluster 2
+- For P8(4,9):  d(P8, C1) = sqrt(4+1)=2.24;   d(P8, C2) = sqrt(4+16)=4.47 --> Cluster 1
+
+Cluster Membership after Iteration 1:
+- Cluster 1: { P1(2,10), P4(5,8), P8(4,9) }
+- Cluster 2: { P2(2,5), P3(8,4), P5(7,5), P6(6,4), P7(1,2) }
+
+Step 3: Update Centroids:
+New C1:
+x = (2 + 5 + 4) / 3 = 11 / 3 = 3.67
+y = (10 + 8 + 9) / 3 = 27 / 3 = 9.00
+Updated C1 = (3.67, 9.00)
+
+New C2:
+x = (2 + 8 + 7 + 6 + 1) / 5 = 24 / 5 = 4.80
+y = (5 + 4 + 5 + 4 + 2) / 5 = 20 / 5 = 4.00
+Updated C2 = (4.80, 4.00)
+
+Iteration 2:
+Recompute distances of all points to New C1(3.67, 9.00) and New C2(4.80, 4.00).
+Points remain in the same cluster assignments.
+Since cluster memberships do not change:
+ALGORITHM HAS CONVERGED.
+
+
+================================================================================
+EXPERIMENT NO. 6
+HIERARCHICAL CLUSTERING
+================================================================================
+
+1. AIM:
+To understand Agglomerative (bottom-up) Hierarchical Clustering using Euclidean
+Distance and Single Linkage, and trace the cluster merge hierarchy.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is Hierarchical Clustering?
+Hierarchical clustering is an unsupervised technique that creates a nested tree
+structure of clusters (a Dendrogram).
+Unlike K-Means:
+- You do NOT need to specify the number of clusters (K) in advance.
+- Results are deterministic (no random seed initialization dependencies).
+
+2.2 Two Main Types:
+1. Agglomerative (Bottom-Up):
+   - Starts with each object as an individual single-element cluster.
+   - At each successive iteration, the two most similar (closest) clusters are merged.
+   - Stops when all points are unified into a single master cluster, or when target K is met.
+2. Divisive (Top-Down):
+   - Starts with all data points in one single cluster.
+   - Recursively splits clusters down until each point is in its own cluster.
+
+2.3 Cluster Distance Linkage Methods:
+When comparing distance between two clusters A and B:
+1. Single Linkage (Minimum Distance):
+   d(A, B) = min { dist(p, q) : p in A, q in B }
+2. Complete Linkage (Maximum Distance):
+   d(A, B) = max { dist(p, q) : p in A, q in B }
+3. Average Linkage:
+   d(A, B) = (1 / (|A|*|B|)) * SUM [ dist(p, q) ]
+4. Ward's Method:
+   Merges the pair of clusters that minimizes the increase in total within-cluster variance.
+
+2.4 Dendrogram:
+A 2D tree diagram where:
+- The horizontal axis displays the individual data points / clusters.
+- The vertical axis represents the distance/dissimilarity at which clusters merged.
+- Cutting the dendrogram horizontally at a chosen height determines the final number of clusters.
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: CUSTOMER AGE VS SPENDING SCORE
+--------------------------------------------------------------------------------
+
+Dataset:
+Points representing [Age, Spending Score]:
+- P1: [18, 85] (Young, high spender)
+- P2: [20, 90] (Young, high spender)
+- P3: [22, 80] (Young, high spender)
+- P4: [55, 20] (Senior, low spender)
+- P5: [60, 15] (Senior, low spender)
+Target: Form K = 2 clusters using Agglomerative Single Linkage.
+
+Step 1: Initial Clusters (each point is its own cluster):
+C1 = {P1}, C2 = {P2}, C3 = {P3}, C4 = {P4}, C5 = {P5}
+
+Step 2: Compute Proximity (Distance) Matrix:
+Using Euclidean Distance: dist = sqrt( (x1-x2)^2 + (y1-y2)^2 )
+- dist(P1, P2) = sqrt((18-20)^2 + (85-90)^2) = sqrt(4 + 25) = sqrt(29) = 5.39
+- dist(P1, P3) = sqrt((18-22)^2 + (85-80)^2) = sqrt(16 + 25) = sqrt(41) = 6.40
+- dist(P2, P3) = sqrt((20-22)^2 + (90-80)^2) = sqrt(4 + 100) = sqrt(104) = 10.20
+- dist(P4, P5) = sqrt((55-60)^2 + (20-15)^2) = sqrt(25 + 25) = sqrt(50) = 7.07
+- Distances between young group {P1, P2, P3} and senior group {P4, P5} are large:
+  e.g., dist(P3, P4) = sqrt((22-55)^2 + (80-20)^2) = sqrt(1089 + 3600) = 68.48
+
+Initial Distance Matrix:
+      P1     P2     P3     P4     P5
+P1    0.00   5.39   6.40   73.49  79.20
+P2    5.39   0.00  10.20   78.29  84.02
+P3    6.40  10.20   0.00   68.48  74.01
+P4   73.49  78.29  68.48    0.00   7.07
+P5   79.20  84.02  74.01    7.07   0.00
+
+Step 3: First Merge:
+The smallest entry in the matrix is dist(P1, P2) = 5.39.
+Merge P1 and P2 -> New Cluster (P1, P2).
+Remaining clusters: {P1, P2}, {P3}, {P4}, {P5}.
+
+Step 4: Update Distance Matrix (Single Linkage):
+- dist({P1, P2}, P3) = min(dist(P1, P3), dist(P2, P3)) = min(6.40, 10.20) = 6.40
+- dist(P4, P5) = 7.07
+Next smallest distance is 6.40 between {P1, P2} and P3.
+Merge {P1, P2} and P3 -> New Cluster {P1, P2, P3}.
+Remaining clusters: {P1, P2, P3}, {P4}, {P5}.
+
+Step 5: Next Merge:
+Distance between P4 and P5 is 7.07.
+Distance between {P1, P2, P3} and {P4} is min(73.49, 78.29, 68.48) = 68.48.
+The smallest distance is 7.07.
+Merge P4 and P5 -> New Cluster {P4, P5}.
+Remaining clusters: {P1, P2, P3} and {P4, P5}.
+
+Step 6: Termination:
+Number of clusters = 2, which satisfies our target K = 2.
+Final Clusters:
+- Cluster 1: {P1, P2, P3} (Young, high spending score)
+- Cluster 2: {P4, P5}     (Senior, low spending score)
+
+
+================================================================================
+EXPERIMENT NO. 7
+APRIORI ALGORITHM FOR MARKET BASKET ANALYSIS
+================================================================================
+
+1. AIM:
+To implement the Apriori algorithm for discovering frequent itemsets and generating
+association rules from transaction datasets using support and confidence thresholds.
+
+--------------------------------------------------------------------------------
+2. THEORY:
+--------------------------------------------------------------------------------
+
+2.1 What is Market Basket Analysis?
+Market Basket Analysis is a data mining technique used by retailers to uncover
+associations between items purchased together in transactions. It answers:
+"If a customer purchases Bread, how likely are they to also buy Butter?"
+
+2.2 Key Mathematical Measures:
+
+1. Support:
+   The frequency with which an itemset appears across all transactions in the database:
+       Support(X) = (Number of transactions containing X) / (Total transactions)
+   Support Count: Absolute number of transactions containing X.
+
+2. Confidence:
+   The conditional probability that transaction contains itemset Y given it contains X:
+       Confidence(X -> Y) = Support(X U Y) / Support(X)
+                          = Support_Count(X U Y) / Support_Count(X)
+
+3. Lift:
+   Measures how much more often X and Y occur together than expected by chance:
+       Lift(X -> Y) = Confidence(X -> Y) / Support(Y)
+   - Lift = 1: X and Y are independent.
+   - Lift > 1: Positive correlation (X increases likelihood of Y).
+   - Lift < 1: Negative correlation (X decreases likelihood of Y).
+
+2.3 The Apriori Property (Downward-Closure / Anti-Monotone Property):
+"All non-empty subsets of a frequent itemset must also be frequent."
+Contrapositive (Pruning Principle):
+"If an itemset is infrequent (below min_support), then NONE of its supersets
+can ever be frequent."
+Example: If {Beer} is infrequent, then {Beer, Diaper} cannot possibly be frequent.
+
+2.4 Apriori Procedure (Level-wise Search):
+1. Scan database to calculate Support for candidate 1-itemsets (C1).
+2. Filter C1 by min_support to obtain frequent 1-itemsets (L1).
+3. Join Step: Join L_{k-1} with itself to generate candidate k-itemsets (C_k).
+4. Prune Step: Remove any candidate from C_k if any of its (k-1) subsets is not in L_{k-1}.
+5. Scan database to count support of pruned C_k.
+6. Filter by min_support to form L_k.
+7. Repeat until no new frequent itemsets can be formed.
+
+--------------------------------------------------------------------------------
+3. DETAILED WORKED EXAMPLE: 9-TRANSACTION MARKET BASKET
+--------------------------------------------------------------------------------
+
+Dataset Transactions:
+T1: {I1, I2, I5}
+T2: {I2, I4}
+T3: {I2, I3}
+T4: {I1, I2, I4}
+T5: {I1, I3}
+T6: {I2, I3}
+T7: {I1, I3}
+T8: {I1, I2, I3, I5}
+T9: {I1, I2, I3}
+
+Total Transactions: N = 9
+Minimum Support Count: min_sup_count = 2 (approx. 22.2%)
+Minimum Confidence: min_conf = 60%
+
+STEP 1: Find Frequent 1-Itemsets (L1):
+Scan database to count occurrences:
++----------+---------------+
+| Itemset  | Support Count |
++----------+---------------+
+| {I1}     | 6             |
+| {I2}     | 7             |
+| {I3}     | 6             |
+| {I4}     | 2             |
+| {I5}     | 2             |
++----------+---------------+
+All items have count >= 2.
+Therefore, L1 = { {I1}:6, {I2}:7, {I3}:6, {I4}:2, {I5}:2 }.
+
+STEP 2: Generate Candidate 2-Itemsets (C2):
+Join L1 with L1:
+Candidates: {I1,I2}, {I1,I3}, {I1,I4}, {I1,I5}, {I2,I3}, {I2,I4}, {I2,I5},
+            {I3,I4}, {I3,I5}, {I4,I5}.
+Pruning check: All 1-item subsets exist in L1, so no candidates are pruned.
+
+Scan DB to count support for C2:
++----------+---------------+-------------+
+| Itemset  | Support Count | >= min_sup? |
++----------+---------------+-------------+
+| {I1, I2} | 4             | Yes (Keep)  |
+| {I1, I3} | 4             | Yes (Keep)  |
+| {I1, I4} | 1             | No (Drop)   |
+| {I1, I5} | 2             | Yes (Keep)  |
+| {I2, I3} | 4             | Yes (Keep)  |
+| {I2, I4} | 2             | Yes (Keep)  |
+| {I2, I5} | 2             | Yes (Keep)  |
+| {I3, I4} | 0             | No (Drop)   |
+| {I3, I5} | 1             | No (Drop)   |
+| {I4, I5} | 0             | No (Drop)   |
++----------+---------------+-------------+
+Frequent 2-Itemsets (L2):
+L2 = { {I1,I2}:4, {I1,I3}:4, {I1,I5}:2, {I2,I3}:4, {I2,I4}:2, {I2,I5}:2 }
+
+STEP 3: Generate Candidate 3-Itemsets (C3):
+Join Step:
+Combine itemsets from L2 sharing the same first item:
+- From {I1,I2} and {I1,I3} -> {I1, I2, I3}
+- From {I1,I2} and {I1,I5} -> {I1, I2, I5}
+- From {I2,I3} and {I2,I4} -> {I2, I3, I4}
+- From {I2,I3} and {I2,I5} -> {I2, I3, I5}
+- From {I2,I4} and {I2,I5} -> {I2, I4, I5}
+
+Prune Step:
+Check all 2-item subsets against L2:
+- For {I1, I2, I3}: Subsets are {I1,I2}, {I1,I3}, {I2,I3}. All in L2! -> VALID.
+- For {I1, I2, I5}: Subsets are {I1,I2}, {I1,I5}, {I2,I5}. All in L2! -> VALID.
+- For {I2, I3, I4}: Subset {I3,I4} is NOT in L2! -> PRUNED (REMOVED).
+- For {I2, I3, I5}: Subset {I3,I5} is NOT in L2! -> PRUNED (REMOVED).
+- For {I2, I4, I5}: Subset {I4,I5} is NOT in L2! -> PRUNED (REMOVED).
+
+Remaining Candidates after Pruning:
+C3 = { {I1, I2, I3}, {I1, I2, I5} }
+
+Scan DB for C3 Support:
+- {I1, I2, I3} appears in: T8, T9 -> Count = 2 (also T4 has I1,I2,I4; T3 has I2,I3; check DB:
+  T8: {I1,I2,I3,I5}, T9: {I1,I2,I3}. Total count = 2.
+- {I1, I2, I5} appears in: T1, T8 -> Count = 2.
+
+Both have count = 2 >= min_sup.
+Frequent 3-Itemsets (L3):
+L3 = { {I1, I2, I3}:2, {I1, I2, I5}:2 }
+
+STEP 4: Candidate 4-Itemsets (C4):
+Joining L3 yields {I1, I2, I3, I5}.
+Subsets of size 3 include {I1, I3, I5}, which is NOT in L3.
+Therefore, C4 is pruned away completely.
+Algorithm stops.
+
+STEP 5: Association Rule Generation & Confidence Calculation:
+Consider frequent itemset: {I1, I2} with Support_Count({I1, I2}) = 4.
+Support_Count({I1}) = 6
+Support_Count({I2}) = 7
+
+Rule 1: {I1} -> {I2}
+Confidence = Support_Count({I1, I2}) / Support_Count({I1})
+           = 4 / 6
+           = 66.67% (>= 60% min_conf -> STRONG RULE!)
+
+Rule 2: {I2} -> {I1}
+Confidence = Support_Count({I1, I2}) / Support_Count({I2})
+           = 4 / 7
+           = 57.14% (< 60% min_conf -> REJECTED)
+
+Consider frequent 3-itemset: {I1, I5} -> {I2}:
+Support_Count({I1, I2, I5}) = 2
+Support_Count({I1, I5}) = 2
+Confidence = 2 / 2 = 100% (STRONG RULE!)
+
+
+================================================================================
+APPENDIX: VIVA VOCE FREQUENTLY ASKED QUESTIONS & ANSWERS
+================================================================================
+
+Q1: What is the main difference between OLTP and OLAP?
+A1: OLTP is operational and transaction-oriented (designed for fast inserts/updates
+    in 3NF normalized tables), while OLAP is analytical and subject-oriented
+    (designed for complex reporting queries over historical denormalized data).
+
+Q2: Why is a Star Schema faster than a Snowflake Schema?
+A2: Because Star Schema dimensions are denormalized, queries require fewer SQL
+    joins to aggregate metrics compared to Snowflake, which requires multiple joins
+    across normalized dimension hierarchies.
+
+Q3: What is the difference between Classification and Clustering?
+A3: Classification is supervised learning (predicts predefined categorical class
+    labels using labeled training data). Clustering is unsupervised learning
+    (discovers natural groupings based on distance/similarity without pre-existing labels).
+
+Q4: What is Entropy in ID3?
+A4: Entropy measures the uncertainty or impurity of a sample set. Pure sets have
+    entropy = 0; equally mixed sets have entropy = 1.
+
+Q5: In Linear Regression, what does Ordinary Least Squares (OLS) minimize?
+A5: OLS minimizes the Sum of Squared Residuals/Errors (SSE) between actual observed
+    target values and the values predicted by the regression line.
+
+Q6: How does the Elbow Method help in K-Means?
+A6: It plots SSE vs K. The point where the rate of SSE decrease abruptly levels off
+    represents the "elbow," indicating the optimal number of clusters.
+
+Q7: What is the Apriori property?
+A7: The downward-closure property states that all non-empty subsets of a frequent
+    itemset must also be frequent. If a subset is infrequent, its superset cannot
+    be frequent.
+
+Q8: What is the difference between Support and Confidence?
+A8: Support measures how frequently an itemset appears across the entire dataset.
+    Confidence measures the conditional likelihood that item Y is bought given
+    that item X was purchased.
+
+================================================================================
+END OF FILE
+================================================================================
