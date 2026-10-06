@@ -1,0 +1,404 @@
+================================================================================
+EXPERIMENT NO. 1
+DATA WAREHOUSE MODELING: STAR SCHEMA AND SNOWFLAKE SCHEMA IN MYSQL
+================================================================================
+
+AIM:
+To understand dimensional modeling concepts and implement Star Schema and
+Snowflake Schema using MySQL DDL, DML, and Foreign Key constraints.
+
+================================================================================
+PART A: THEORY
+================================================================================
+
+1. WHAT IS DIMENSIONAL MODELING?
+Dimensional modeling is a database design technique tailored for data warehousing
+and Online Analytical Processing (OLAP). It structures data into two table types:
+  - Fact Table: Contains numerical, quantitative measurements/metrics
+    (e.g., sales amount, quantity sold) and foreign keys referencing dimensions.
+  - Dimension Tables: Contain descriptive textual attributes providing context
+    (e.g., who bought, what was bought, where, and when).
+
+--------------------------------------------------------------------------------
+2. STAR SCHEMA
+--------------------------------------------------------------------------------
+Concept:
+The simplest dimensional model where a central fact table connects directly to
+denormalized dimension tables. The structure resembles a star.
+
+Key Characteristics:
+  - Central fact table surrounded by dimension tables.
+  - 1-to-many relationship: One dimension row connects to multiple fact rows.
+  - Denormalized: Dimension tables contain repeated/redundant descriptive data
+    (no sub-dimension tables).
+  - Simple queries: Requires fewer joins (single-level joins).
+
+Advantages:
+  - High query performance due to fewer JOIN operations.
+  - Easy to understand and write SQL queries for business reporting.
+  - Optimized for OLAP slice-and-dice operations.
+
+Disadvantages:
+  - Data redundancy in dimension tables increases storage requirements.
+  - Slower update/insert modifications in dimension tables due to redundancy.
+
+--------------------------------------------------------------------------------
+3. SNOWFLAKE SCHEMA
+--------------------------------------------------------------------------------
+Concept:
+An extension of the Star Schema where dimension tables are normalized into
+multiple related sub-dimension tables. The resulting structure resembles a snowflake.
+
+Key Characteristics:
+  - Fact table at the center, surrounded by normalized dimension tables.
+  - Dimension tables branch out into secondary sub-dimensions (3NF normalization).
+  - Reduces redundancy: Category, Brand, City/Region are stored in dedicated lookup tables.
+
+Advantages:
+  - Eliminates data redundancy and saves storage space.
+  - Ensures higher data integrity and easier maintenance of dimensional hierarchies.
+
+Disadvantages:
+  - Complex SQL queries requiring multi-level JOINs.
+  - Slower query response time compared to Star Schema.
+
+--------------------------------------------------------------------------------
+4. COMPARISON: STAR SCHEMA VS. SNOWFLAKE SCHEMA
+--------------------------------------------------------------------------------
++----------------------+---------------------------+---------------------------+
+| Feature              | Star Schema               | Snowflake Schema          |
++----------------------+---------------------------+---------------------------+
+| Dimension Design     | Denormalized              | Normalized (split tables) |
+| SQL Joins            | Fewer joins (1-level)     | More joins (multi-level)  |
+| Query Performance    | Fast & optimal for read   | Slower due to extra joins |
+| Data Redundancy      | Higher                    | Minimal / None            |
+| Schema Complexity    | Simple (star-shaped)      | Complex (snowflake-shaped)|
+| Maintenance/Updates  | Redundant updates         | Clean, single-row updates |
+| Best Suited For      | Fast OLAP, simple marts   | Complex hierarchies, DWs  |
++----------------------+---------------------------+---------------------------+
+
+================================================================================
+PART B: ARCHITECTURAL DIAGRAMS
+================================================================================
+
+1. STAR SCHEMA ARCHITECTURE
+--------------------------------------------------------------------------------
+
+                         +-------------------+
+                         |   dim_customer    |
+                         +-------------------+
+                         | * customer_id (PK)|
+                         |   customer_name   |
+                         |   gender          |
+                         |   city            |
+                         +---------+---------+
+                                   |
+                                   | 1:N
+   +------------------+            |            +------------------+
+   |   dim_product    |            |            |    dim_store     |
+   +------------------+            |            +------------------+
+   | * product_id(PK) |            |            | * store_id (PK)  |
+   |   product_name   |----+       |       +----|   store_name     |
+   |   category       |    | 1:N   |   1:N |    |   city           |
+   |   brand          |    |       |       |    |   state          |
+   |   unit_price     |    |       |       |    +------------------+
+   +------------------+    |       |       |
+                           v       v       v
+                        +----------------------+
+                        |      fact_sales      |
+                        +----------------------+
+                        | * sales_id      (PK) |
+                        | # date_id       (FK) |
+                        | # customer_id   (FK) |
+                        | # product_id    (FK) |
+                        | # store_id      (FK) |
+                        |   quantity           |
+                        |   total_amount       |
+                        +----------+-----------+
+                                   ^
+                                   | 1:N
+                         +---------+---------+
+                         |     dim_date      |
+                         +-------------------+
+                         | * date_id    (PK) |
+                         |   full_date       |
+                         |   month           |
+                         |   quarter         |
+                         |   year            |
+                         +-------------------+
+
+
+2. SNOWFLAKE SCHEMA ARCHITECTURE (NORMALIZED DIMENSIONS)
+--------------------------------------------------------------------------------
+
+  +-------------------+
+  |   dim_category    |
+  +-------------------+
+  | * category_id(PK) |
+  |   category_name   |
+  +---------+---------+
+            | 1:N
+            v
+  +-------------------+       +-------------------+
+  |    dim_product    |       |   dim_customer    |
+  +-------------------+       +-------------------+
+  | * product_id (PK) |       | * customer_id(PK) |
+  |   product_name    |       |   customer_name   |
+  | # category_id(FK) |       |   gender          |
+  | # brand_id   (FK) |       | # city_id    (FK) |-----+
+  |   unit_price      |       +---------+---------+     | 1:N
+  +---------+---------+                 |               v
+            ^                           | 1:N     +-------------------+
+            | 1:N                       |         |     dim_city      |
+  +---------+---------+                 |         +-------------------+
+  |    dim_brand      |                 |         | * city_id    (PK) |
+  +-------------------+                 |         |   city_name       |
+  | * brand_id   (PK) |                 |         |   state           |
+  |   brand_name      |                 |         +-------------------+
+  +-------------------+                 |
+                                        v
+                              +--------------------+
+                              |     fact_sales     |
+                              +--------------------+
+                              | * sales_id    (PK) |
+                              | # date_id     (FK) |
+                              | # customer_id (FK) |
+                              | # product_id  (FK) |
+                              | # store_id    (FK) |
+                              |   quantity         |
+                              |   total_amount     |
+                              +----+----------+----+
+                                   ^          ^
+                               1:N |          | 1:N
+               +-------------------+          +-------------------+
+               |                                                  |
+     +---------+---------+                              +---------+---------+
+     |     dim_date      |                              |    dim_store      |
+     +-------------------+                              +-------------------+
+     | * date_id    (PK) |                              | * store_id   (PK) |
+     |   full_date       |                              |   store_name      |
+     |   month           |                              | # city_id    (FK) |
+     |   quarter         |                              +---------+---------+
+     |   year            |                                        | 1:N
+     +-------------------+                                        +--> (dim_city)
+
+================================================================================
+PART C: MYSQL CODE — STAR SCHEMA IMPLEMENTATION
+================================================================================
+
+-- 1. Create and use database
+CREATE DATABASE IF NOT EXISTS dw_star_db;
+USE dw_star_db;
+
+-- 2. Create Dimension Tables (Denormalized)
+CREATE TABLE dim_date (
+    date_id INT PRIMARY KEY,
+    full_date DATE NOT NULL,
+    month VARCHAR(15),
+    quarter VARCHAR(5),
+    year INT
+);
+
+CREATE TABLE dim_customer (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(50) NOT NULL,
+    gender VARCHAR(10),
+    city VARCHAR(50)
+);
+
+CREATE TABLE dim_product (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(50) NOT NULL,
+    category VARCHAR(30),
+    brand VARCHAR(30),
+    unit_price DECIMAL(10, 2)
+);
+
+CREATE TABLE dim_store (
+    store_id INT PRIMARY KEY,
+    store_name VARCHAR(50) NOT NULL,
+    city VARCHAR(50),
+    state VARCHAR(50)
+);
+
+-- 3. Create Central Fact Table with Foreign Keys
+CREATE TABLE fact_sales (
+    sales_id INT PRIMARY KEY,
+    date_id INT,
+    customer_id INT,
+    product_id INT,
+    store_id INT,
+    quantity INT,
+    total_amount DECIMAL(10, 2),
+    FOREIGN KEY (date_id) REFERENCES dim_date(date_id),
+    FOREIGN KEY (customer_id) REFERENCES dim_customer(customer_id),
+    FOREIGN KEY (product_id) REFERENCES dim_product(product_id),
+    FOREIGN KEY (store_id) REFERENCES dim_store(store_id)
+);
+
+-- 4. Insert Sample Data into Star Schema
+INSERT INTO dim_date VALUES
+(101, '2024-01-15', 'January', 'Q1', 2024),
+(102, '2024-02-20', 'February', 'Q1', 2024);
+
+INSERT INTO dim_customer VALUES
+(201, 'Rahul Sharma', 'Male', 'Mumbai'),
+(202, 'Priya Patel', 'Female', 'Pune');
+
+INSERT INTO dim_product VALUES
+(301, 'Laptop', 'Electronics', 'Dell', 55000.00),
+(302, 'Wireless Mouse', 'Electronics', 'Logitech', 800.00);
+
+INSERT INTO dim_store VALUES
+(401, 'MegaStore Andheri', 'Mumbai', 'Maharashtra'),
+(402, 'MegaStore Kothrud', 'Pune', 'Maharashtra');
+
+INSERT INTO fact_sales VALUES
+(1, 101, 201, 301, 401, 1, 55000.00),
+(2, 101, 202, 302, 401, 2, 1600.00),
+(3, 102, 201, 302, 402, 1, 800.00);
+
+-- 5. Analytical OLAP Query on Star Schema (Single-Level Joins)
+SELECT 
+    d.year,
+    d.quarter,
+    p.category,
+    p.product_name,
+    s.city AS store_city,
+    SUM(f.quantity) AS total_units_sold,
+    SUM(f.total_amount) AS total_revenue
+FROM fact_sales f
+JOIN dim_date d ON f.date_id = d.date_id
+JOIN dim_product p ON f.product_id = p.product_id
+JOIN dim_store s ON f.store_id = s.store_id
+GROUP BY d.year, d.quarter, p.category, p.product_name, s.city;
+
+================================================================================
+PART D: MYSQL CODE — SNOWFLAKE SCHEMA IMPLEMENTATION
+================================================================================
+
+-- 1. Create and use database
+CREATE DATABASE IF NOT EXISTS dw_snowflake_db;
+USE dw_snowflake_db;
+
+-- 2. Create Level-2 Sub-Dimension Tables (Normalized Lookups)
+CREATE TABLE dim_category (
+    category_id INT PRIMARY KEY,
+    category_name VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE dim_brand (
+    brand_id INT PRIMARY KEY,
+    brand_name VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE dim_city (
+    city_id INT PRIMARY KEY,
+    city_name VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL
+);
+
+-- 3. Create Level-1 Dimension Tables referencing Sub-Dimensions
+CREATE TABLE dim_date (
+    date_id INT PRIMARY KEY,
+    full_date DATE NOT NULL,
+    month VARCHAR(15),
+    quarter VARCHAR(5),
+    year INT
+);
+
+CREATE TABLE dim_customer (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(50) NOT NULL,
+    gender VARCHAR(10),
+    city_id INT,
+    FOREIGN KEY (city_id) REFERENCES dim_city(city_id)
+);
+
+CREATE TABLE dim_product (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(50) NOT NULL,
+    category_id INT,
+    brand_id INT,
+    unit_price DECIMAL(10, 2),
+    FOREIGN KEY (category_id) REFERENCES dim_category(category_id),
+    FOREIGN KEY (brand_id) REFERENCES dim_brand(brand_id)
+);
+
+CREATE TABLE dim_store (
+    store_id INT PRIMARY KEY,
+    store_name VARCHAR(50) NOT NULL,
+    city_id INT,
+    FOREIGN KEY (city_id) REFERENCES dim_city(city_id)
+);
+
+-- 4. Create Central Fact Table
+CREATE TABLE fact_sales (
+    sales_id INT PRIMARY KEY,
+    date_id INT,
+    customer_id INT,
+    product_id INT,
+    store_id INT,
+    quantity INT,
+    total_amount DECIMAL(10, 2),
+    FOREIGN KEY (date_id) REFERENCES dim_date(date_id),
+    FOREIGN KEY (customer_id) REFERENCES dim_customer(customer_id),
+    FOREIGN KEY (product_id) REFERENCES dim_product(product_id),
+    FOREIGN KEY (store_id) REFERENCES dim_store(store_id)
+);
+
+-- 5. Insert Sample Data into Snowflake Schema
+INSERT INTO dim_category VALUES
+(1, 'Electronics'),
+(2, 'Accessories');
+
+INSERT INTO dim_brand VALUES
+(10, 'Dell'),
+(20, 'Logitech');
+
+INSERT INTO dim_city VALUES
+(1001, 'Mumbai', 'Maharashtra'),
+(1002, 'Pune', 'Maharashtra');
+
+INSERT INTO dim_date VALUES
+(101, '2024-01-15', 'January', 'Q1', 2024),
+(102, '2024-02-20', 'February', 'Q1', 2024);
+
+INSERT INTO dim_customer VALUES
+(201, 'Rahul Sharma', 'Male', 1001),
+(202, 'Priya Patel', 'Female', 1002);
+
+INSERT INTO dim_product VALUES
+(301, 'Laptop', 1, 10, 55000.00),
+(302, 'Wireless Mouse', 2, 20, 800.00);
+
+INSERT INTO dim_store VALUES
+(401, 'MegaStore Andheri', 1001),
+(402, 'MegaStore Kothrud', 1002);
+
+INSERT INTO fact_sales VALUES
+(1, 101, 201, 301, 401, 1, 55000.00),
+(2, 101, 202, 302, 401, 2, 1600.00),
+(3, 102, 201, 302, 402, 1, 800.00);
+
+-- 6. Analytical OLAP Query on Snowflake Schema (Multi-Level Joins)
+SELECT 
+    d.year,
+    c.category_name,
+    b.brand_name,
+    p.product_name,
+    ct.city_name AS store_city,
+    SUM(f.quantity) AS total_units_sold,
+    SUM(f.total_amount) AS total_revenue
+FROM fact_sales f
+JOIN dim_date d ON f.date_id = d.date_id
+JOIN dim_product p ON f.product_id = p.product_id
+JOIN dim_category c ON p.category_id = c.category_id
+JOIN dim_brand b ON p.brand_id = b.brand_id
+JOIN dim_store s ON f.store_id = s.store_id
+JOIN dim_city ct ON s.city_id = ct.city_id
+GROUP BY d.year, c.category_name, b.brand_name, p.product_name, ct.city_name;
+
+================================================================================
+END OF EXPERIMENT NO. 1
+================================================================================
